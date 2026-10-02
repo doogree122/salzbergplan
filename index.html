@@ -15,7 +15,7 @@
 html,body{height:100%;overflow:hidden}
 body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Nunito,Arial,sans-serif;color:var(--k)}
 #stage{width:800px;height:480px;flex:none;transform-origin:center}
-#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 268px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
+#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 320px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
 .fred{font-family:Fredoka,Nunito,Arial,sans-serif}
 svg{display:block;flex:none}
 
@@ -45,7 +45,7 @@ svg{display:block;flex:none}
 .dinner b{font:700 21px/1 Fredoka,Arial,sans-serif}
 .dinner .night{margin-left:auto;text-align:right;font:800 12px/1.15 Nunito,Arial,sans-serif;max-width:46%}
 
-/* family photo (right side) — photo.png is made by photo.py at 262x364 */
+/* family photo (right side) — photo.png is made by photo.py at 314x364 */
 .right{position:relative;border:3px solid var(--k);border-radius:14px;overflow:hidden;background:var(--b);min-height:0}
 .right img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;image-rendering:pixelated}
 .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--w);font:700 20px/1.1 Fredoka,Arial,sans-serif;text-align:center}
@@ -162,7 +162,7 @@ function parseSheet(wb){
       break;
     }
     // FYI: a cell that says "FYI"; notes are to its right and in the rows below, up to the first blank row.
-    // A note under a day column shows only on that day; anywhere else it always shows.
+    // Notes on the FYI row always show. In the rows below, a note under a day column shows only on that day.
     const fyi=[],fyiRows=new Set();
     find: for(let r=0;r<=R.e.r;r++) for(let c=0;c<=R.e.c;c++){
       if(!/^fyi\b/i.test(txt(r,c))) continue;
@@ -171,11 +171,12 @@ function parseSheet(wb){
       fyiRows.add(r);
       for(let rr=r;rr<=R.e.r;rr++){
         if(rr>r&&hidR.has(rr)){fyiRows.add(rr);continue}
+        if(rr>r&&/^legend/i.test(txt(rr,0))) break;
         let any=false;
         for(let cc=(rr===r?c+1:c);cc<=R.e.c;cc++){
           if(hidC.has(cc)) continue;
           const t=txt(rr,cc); if(!t) continue; any=true;
-          const d=days.find(d=>d.c===cc); fyi.push({t,day:d?d.n:null});
+          const d=rr>r&&days.find(d=>d.c===cc); fyi.push({t,day:d?d.n:null});
         }
         if(rr>r){ if(!any) break; fyiRows.add(rr); }
       }

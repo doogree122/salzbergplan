@@ -1,5 +1,5 @@
 # Picks a photo from the shared Google Photos album and makes photo.png for the display:
-# cropped to the photo panel (262x364) and dithered to the six E Ink Spectra 6 colors.
+# cropped to the photo panel (314x364) and dithered to the six E Ink Spectra 6 colors.
 # A different photo is chosen every hour. If anything fails, no photo.png is written and
 # the page shows a placeholder instead, so the plan itself always renders.
 import io, os, re, sys, urllib.request
@@ -10,7 +10,7 @@ from PIL import Image, ImageEnhance, ImageOps
 ALBUM = os.environ.get("ALBUM_URL") or (
     "https://photos.google.com/share/AF1QipMp2zhF1zyFHB2Lj5cv5UZY24D3LplQbN8BrczfrZw7p13bRqsmQ66JyAZAa3y2XQ"
     "?key=UG9hY1lYcGI4aDFxTEc3Q3FWOURRaWlFaEwxcjRR")
-SIZE = (262, 364)
+SIZE = (314, 364)
 CHANGE_EVERY_HOURS = 1
 PALETTE = [(0,0,0),(255,255,255),(208,32,26),(242,197,0),(28,138,60),(27,79,191)]
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"}

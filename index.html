@@ -120,7 +120,7 @@ const ICON={
  house:`<path d="M5 14 16 5l11 9" fill="${C.red}"/><rect x="8" y="14" width="16" height="13" fill="${W}"/><rect x="14" y="19" width="5" height="8" fill="${C.green}"/>`
 };
 const icon=(n,sz)=>S(ICON[n]||ICON.star,sz);
-const FACE=(col,sz=34)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="${W}" stroke="${K}" stroke-width="2.2"/><circle cx="11.5" cy="14" r="1.9" fill="${K}"/><circle cx="20.5" cy="14" r="1.9" fill="${K}"/><path d="M11 19.5c2.8 3 7.2 3 10 0" stroke="${K}" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="8.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><circle cx="23.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><path d="M5 11c2-6 7-8 11-8s9 2 11 8c-3-2-7-3-11-3s-8 1-11 3Z" fill="${col}" stroke="${K}" stroke-width="2"/></svg>`;
+const FACE=(col,sz=34)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="${W}" stroke="${K}" stroke-width="2.2"/><circle cx="11.5" cy="14" r="1.9" fill="${K}"/><circle cx="20.5" cy="14" r="1.9" fill="${K}"/><path d="M11 19.5c2.8 3 7.2 3 10 0" stroke="${K}" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="8.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><circle cx="23.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><path d="M5 11c2-6 7-8 11-8s9 2 11 8c-3-2-7-3-11-3s-8 1-11 3Z" fill="${K}" stroke="${K}" stroke-width="2"/></svg>`;
 
 const ACT=[[/soccer|football/i,"soccer"],[/guitar/i,"guitar"],[/music|piano|violin|choir|sing|band/i,"music"],[/danc|ballet/i,"dance"],[/box/i,"boxing"],[/math/i,"math"],[/clue/i,"clue"],[/drama|rehears|theat|play\b/i,"drama"],[/tutor|homework|read|hebrew/i,"book"],[/swim/i,"swim"],[/basket/i,"bball"],[/no school/i,"sun"],[/\bbus\b/i,"bus"]];
 const FOOD=[[/schnitzel|cutlet|chicken|nugget/i,"schnitzel"],[/grill|bbq|barbecue|steak/i,"grill"],[/sushi/i,"sushi"],[/salmon|fish/i,"fish"],[/pizza/i,"pizza"],[/pasta|spaghetti|noodle|mac/i,"pasta"],[/taco|burrito|mexican/i,"taco"],[/burger/i,"burger"],[/sukk|sukkah/i,"sukkah"],[/shabbat|atzeret|simchat|chag|yom tov|holiday|rosh|seder/i,"candles"],[/out|restaurant|takeout/i,"house"]];
@@ -206,11 +206,11 @@ function render(D){
 
   const kidHTML=kids.map(k=>{
     const rs=D.rows.filter(r=>r.kid===k);
-    return `<div class="kid" style="flex:${rs.length}"><div class="av" style="background:${kc(k)}">${FACE(kc(k),rs.length>1?36:28)}<span>${esc(k)}</span></div><div class="rows">`+
+    return `<div class="kid" style="flex:${rs.length+(rs.length===1?.5:0)}"><div class="av" style="background:${kc(k)}">${FACE(kc(k),rs.length>1?36:28)}<span>${esc(k)}</span></div><div class="rows">`+
       rs.map(r=>{
         const v=r.vals[f], w=who(v,D), off=/no school/i.test(v.t), na=w&&w.na, none=empty(v.t)||na;
         const fl=!off&&((w&&w.flag)||/\?|needs/i.test(v.t));
-        const kind=/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
+        const kind=/after|activ/i.test(r.item)?"after":/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
         const ic=off?"sun":none?"none":kind==="after"?pick(ACT,v.t,"star"):kind;
         return `<div class="row ${off?"off":""} ${fl?"flag":""}">${off?S(ICON.sun,28,W):icon(ic,28)}<div class="tx"><span class="lab">${esc(r.item)}</span><span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span></div>${off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W}">?</span>`:badge(w)}</div>`;
       }).join("")+`</div></div>`;

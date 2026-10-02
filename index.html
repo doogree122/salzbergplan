@@ -130,7 +130,13 @@ const firstWord=v=>{const w=v.replace(/^[\d:.\s-]+(am|pm)?\s*/i,"").split(/[.,(\
 
 /* ---------- read the Google Sheet (values + cell colors + hidden rows/cols) ---------- */
 function hex2rgb(h){h=(h||"").replace(/^#|^FF(?=[0-9A-F]{6}$)/i,"");if(h.length!==6)return null;return [0,2,4].map(i=>parseInt(h.substr(i,2),16))}
-const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+function hs(c){const [r,g,b]=c.map(x=>x/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;
+  if(d){h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360}return [h,mx?d/mx:0]}
+// color distance that also respects hue, so pink never matches grey and light blue never matches light green
+const dist=(a,b)=>{const [h1,s1]=hs(a),[h2,s2]=hs(b);
+  if(Math.abs(s1-s2)>.06&&Math.min(s1,s2)<.06) return 1e9;
+  if(s1>=.06&&s2>=.06){const dh=Math.min(Math.abs(h1-h2),360-Math.abs(h1-h2));if(dh>30)return 1e9}
+  return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])};
 function parseSheet(wb){
   const names=TAB?[TAB]:wb.SheetNames;
   for(const name of names){
@@ -174,7 +180,7 @@ function who(v,D){
   if(v.bg){
     if(v.bg.every(x=>x<40)) return {na:true};
     let best=null,bd=1e9;for(const L of D.legend){const d=dist(v.bg,L.col);if(d<bd){bd=d;best=L}}
-    if(best&&bd<34){
+    if(best&&bd<60){
       if(/need|figure/i.test(best.name)) return {flag:true};
       if(/fill/i.test(best.name)) best=null; else {const p=Object.keys(PEOPLE).find(n=>nameRe(n).test(best.name));return {name:p||best.name,color:PEOPLE[p]||"white"}}
     }

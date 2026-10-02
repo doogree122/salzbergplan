@@ -28,7 +28,8 @@ svg{display:block;flex:none}
 /* kids */
 .left{display:flex;flex-direction:column;gap:6px;min-height:0}
 .kid{display:flex;border:3px solid var(--k);border-radius:14px;overflow:hidden;min-height:0}
-.av{width:56px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:3px solid var(--k);color:var(--w);font:700 13px Fredoka,Arial,sans-serif}
+.av{width:40px;flex:none;display:flex;align-items:center;justify-content:center;border-right:3px solid var(--k);color:var(--w);font:700 17px Fredoka,Arial,sans-serif}
+.av span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap}
 .rows{flex:1;display:flex;flex-direction:column;min-width:0}
 .row{flex:1;display:flex;align-items:center;gap:8px;padding:2px 8px 2px 6px;border-bottom:2px dashed var(--k);min-height:0}
 .row:last-child{border-bottom:0}
@@ -206,7 +207,7 @@ function render(D){
 
   const kidHTML=kids.map(k=>{
     const rs=D.rows.filter(r=>r.kid===k);
-    return `<div class="kid" style="flex:${rs.length+(rs.length===1?.5:0)}"><div class="av" style="background:${kc(k)}">${FACE(kc(k),rs.length>1?36:28)}<span>${esc(k)}</span></div><div class="rows">`+
+    return `<div class="kid" style="flex:${rs.length+(rs.length===1?.5:0)}"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows">`+
       rs.map(r=>{
         const v=r.vals[f], w=who(v,D), off=/no school/i.test(v.t), na=w&&w.na, none=empty(v.t)||na;
         const fl=!off&&((w&&w.flag)||/\?|needs/i.test(v.t));

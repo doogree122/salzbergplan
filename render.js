@@ -8,5 +8,11 @@ const { chromium } = require('playwright');
   await page.waitForSelector('body[data-ready]', { timeout: 30000 });
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'plan.png' });
+  if (process.env.SHABBAT_PREVIEW === '1') {   // the Shabbat screen, whatever day it is
+    await page.goto('http://localhost:8000/index.html?shabbat=1', { waitUntil: 'networkidle' });
+    await page.waitForSelector('body[data-ready]', { timeout: 30000 });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: 'shabbat-preview.png' });
+  }
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

@@ -6,7 +6,7 @@
 <title>Salzberg Weekly Plan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&family=Frank+Ruhl+Libre:wght@700;900&display=block" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* Six E Ink Spectra 6 colors only */
@@ -59,6 +59,14 @@ svg{display:block;flex:none}
 footer{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 4px;font:800 12px Nunito,Arial,sans-serif;white-space:nowrap;overflow:hidden}
 footer .lg{display:flex;align-items:center;gap:4px}
 footer .lg .badge{width:18px;height:18px;font-size:10px;border-width:2px}
+/* Shabbat screen: Friday from 4 pm and all of Saturday */
+#screen.shabbat{display:block;padding:0;position:relative;background:var(--b)}
+.shabbat>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+.shabbat .ph{color:var(--w)}
+.sh{position:absolute;right:12px;bottom:12px;background:var(--w);border:3px solid var(--k);border-radius:16px;padding:8px 16px 10px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.sh .hb{font:900 46px/1.05 "Frank Ruhl Libre",serif;direction:rtl}
+.sh .t{display:flex;align-items:center;gap:8px;font:800 17px/1.1 Nunito,Arial,sans-serif}
+.sh .t b{font:700 19px Fredoka,Arial,sans-serif}
 .msg{grid-column:1/3;grid-row:1/4;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;font:800 20px Nunito,Arial,sans-serif;text-align:center;border:3px solid var(--k);border-radius:16px}
 </style>
 </head>
@@ -80,6 +88,11 @@ const KID_COLORS = ["blue","red","green","black"];
 const PHOTO = "photo.png";
 // Most FYI notes that fit over the photo
 const MAX_FYI = 6;
+// Shabbat screen (full photo + שבת שלום + times from hebcal.com) on Friday from SHABBAT_START_HOUR and all of Saturday.
+// Add ?shabbat=1 to the page address to see it any day.
+const SHABBAT_MODE = false;   // turned on once the mockup is approved
+const SHABBAT_START_HOUR = 16;
+const HEBCAL_GEONAMEID = 4180439;   // Atlanta, GA
 /* ============================================ */
 
 const C={blue:"#1b4fbf",red:"#d0201a",green:"#1c8a3c",yellow:"#f2c500",black:"#000",white:"#fff"};
@@ -270,11 +283,39 @@ function render(D){
    <footer>${icon("car",18)}Who's driving:${lgHTML}<span style="margin-left:auto;display:flex;align-items:center;gap:4px">${icon("star",14)}${esc(D.tab)}</span></footer>`;
 }
 
+function isShabbat(){
+  if(new URLSearchParams(location.search).get("shabbat")==="1") return true;
+  const P=nowParts();
+  return SHABBAT_MODE&&((P.wd===5&&P.hour>=SHABBAT_START_HOUR)||P.wd===6);
+}
+// Candle lighting on Friday and the time Shabbat ends Saturday night (havdalah, or the candle lighting
+// for a holiday that starts right after Shabbat), from hebcal.com for Atlanta.
+async function shabbatTimes(){
+  const P=nowParts(), fri=new Date(P.date); fri.setDate(fri.getDate()+(P.wd===6?-1:5-P.wd)); // this Friday (yesterday on Saturday)
+  const ymd=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+  const sat=new Date(fri); sat.setDate(sat.getDate()+1);
+  const r=await fetch(`https://www.hebcal.com/shabbat?cfg=json&geonameid=${HEBCAL_GEONAMEID}&M=on&gy=${fri.getFullYear()}&gm=${fri.getMonth()+1}&gd=${fri.getDate()}`);
+  const items=(await r.json()).items||[];
+  const at=(day,cats)=>items.find(i=>i.date.startsWith(ymd(day))&&cats.includes(i.category));
+  const time=i=>i?i.title.replace(/^[^:]*:\s*/,"").replace(/(am|pm)$/," $1"):"—";
+  return {candles:time(at(fri,["candles"])), ends:time(at(sat,["havdalah","candles"]))};
+}
+async function renderShabbat(){
+  screen.className="shabbat";
+  let t={candles:"—",ends:"—"};
+  try{t=await shabbatTimes()}catch(e){console.error("hebcal:",e)}
+  screen.innerHTML=`<img id="photo" alt="" src="shabbat.png?t=${Date.now()}" onerror="this.remove();document.getElementById('ph').hidden=false">
+    <div class="ph" id="ph" hidden>${icon("candles",90)}</div>
+    <div class="sh"><div class="hb">שבת שלום</div>
+      <div class="t">${icon("candles",24)}Candle lighting <b>${esc(t.candles)}</b></div>
+      <div class="t">${icon("star",22)}Shabbat ends <b>${esc(t.ends)}</b></div></div>`;
+}
+
 function showError(msg){
   screen.innerHTML=`<div class="msg">${icon("clue",56)}<div>Couldn't read the family sheet</div><div style="font-size:14px;font-weight:700">${esc(msg)}</div></div>`;
 }
 async function load(){
-  try{
+  if(isShabbat()) await renderShabbat(); else try{
     if(!window.XLSX) throw new Error("Spreadsheet reader didn't load");
     const src=new URLSearchParams(location.search).get("xlsx")||`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=xlsx&t=${Date.now()}`;
     const r=await fetch(src,{cache:"no-store"}); if(!r.ok) throw new Error("Google returned "+r.status+" — is the sheet shared “Anyone with the link”?");

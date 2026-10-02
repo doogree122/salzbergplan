@@ -8,6 +8,10 @@ on:
         description: "Also publish crops-preview.png (every album photo with its faces and crop)"
         type: boolean
         default: false
+      shabbat_preview:
+        description: "Also publish shabbat-preview.png (the Friday-evening/Saturday screen, any day)"
+        type: boolean
+        default: false
   push:
     branches: [main]
 permissions:
@@ -28,20 +32,25 @@ jobs:
       - name: Pick the family photo
         env:
           PREVIEW: ${{ inputs.preview && '1' || '0' }}
+          SHABBAT: ${{ inputs.shabbat_preview && '1' || '0' }}
         run: |
           pip install pillow opencv-python-headless numpy
           curl -fsSL -o face_detection_yunet_2023mar.onnx https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx || echo "face model download failed; using the plain crop"
           python3 photo.py
       - name: Screenshot the plan
+        env:
+          SHABBAT_PREVIEW: ${{ inputs.shabbat_preview && '1' || '0' }}
         run: |
           python3 -m http.server 8000 >/dev/null 2>&1 &
           sleep 2
           node render.js
       - name: Snap to the six e-ink colors
-        run: python3 quantize.py plan.png
+        run: |
+          python3 quantize.py plan.png
+          [ ! -f shabbat-preview.png ] || python3 quantize.py shabbat-preview.png
       - name: Publish plan.png to the display branch
         run: |
-          mkdir out && cp plan.png out/ && { [ ! -f crops-preview.png ] || cp crops-preview.png out/; } && cd out
+          mkdir out && cp plan.png out/ && { [ ! -f crops-preview.png ] || cp crops-preview.png out/; } && { [ ! -f shabbat-preview.png ] || cp shabbat-preview.png out/; } && cd out
           git init -q -b display
           git config user.name "plan-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

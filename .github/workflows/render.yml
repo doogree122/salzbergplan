@@ -1,7 +1,7 @@
 name: Render display image
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7,22,37,52 * * * *"   # every 15 min, off the top of the hour when GitHub is busiest
   workflow_dispatch:
   push:
     branches: [main]
@@ -20,7 +20,7 @@ jobs:
           node-version: 20
       - name: Install Playwright
         run: npm install --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
-      - name: Pick this hour's family photo
+      - name: Pick the family photo
         run: pip install pillow && python3 photo.py
       - name: Screenshot the plan
         run: |

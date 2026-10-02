@@ -65,7 +65,7 @@ jobs:
   # To stop it: Actions -> Render display image -> "..." -> Disable workflow.
   next:
     needs: render
-    if: ${{ always() }}
+    if: ${{ !cancelled() }}   # after a success or a failure, but not when a newer run replaced this one
     runs-on: ubuntu-latest
     steps:
       - name: Wait for the next quarter hour

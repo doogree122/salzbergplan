@@ -4,88 +4,189 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Salzberg Weekly Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=block" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* Six E Ink Spectra 6 colors only */
 :root{--k:#000;--w:#fff;--r:#d0201a;--y:#f2c500;--g:#1c8a3c;--b:#1b4fbf}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;overflow:hidden}
-body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;color:var(--k)}
+body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Nunito,Arial,sans-serif;color:var(--k)}
 #stage{width:800px;height:480px;flex:none;transform-origin:center}
-#screen{width:800px;height:480px;background:var(--w);border:4px solid var(--k);display:grid;grid-template-columns:1fr 292px;grid-template-rows:68px 1fr 26px;overflow:hidden}
-.top{grid-column:1/3;background:var(--y);border-bottom:4px solid var(--k);display:flex;align-items:center;padding:0 16px;gap:14px}
-.top .day{font:900 42px/1 "Arial Black",Arial,sans-serif;letter-spacing:-1px}
-.top .date{font:700 20px Arial,sans-serif}
-.top .ttl{margin-left:auto;text-align:right;font:900 15px/1.15 "Arial Black",Arial,sans-serif}
-.left{display:flex;flex-direction:column;border-right:4px solid var(--k);min-height:0}
-.kids{flex:1;display:flex;flex-direction:column;min-height:0}
-.kid{display:flex;border-bottom:3px solid var(--k);min-height:0}
-.kn{width:34px;background:var(--k);color:var(--w);display:flex;align-items:center;justify-content:center;font:900 15px "Arial Black",Arial,sans-serif;flex:none}
-.kn span{writing-mode:vertical-rl;transform:rotate(180deg)}
-.rows{flex:1;display:flex;flex-direction:column}
-.row{flex:1;display:flex;align-items:center;gap:8px;padding:3px 10px 3px 8px;border-bottom:2px solid var(--k)}
+#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 268px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
+.fred{font-family:Fredoka,Nunito,Arial,sans-serif}
+svg{display:block;flex:none}
+
+/* header */
+.top{grid-column:1/3;background:var(--y);border:3px solid var(--k);border-radius:16px;display:flex;align-items:center;padding:0 12px 0 8px;gap:10px;position:relative;overflow:hidden}
+.top .day{font:700 40px/1 Fredoka,Arial,sans-serif;letter-spacing:-.5px}
+.top .date{font:800 19px Nunito,Arial,sans-serif;margin-top:8px}
+.top .ttl{margin-left:auto;display:flex;align-items:center;gap:8px;font:700 17px/1.05 Fredoka,Arial,sans-serif;text-align:right}
+
+/* kids */
+.left{display:flex;flex-direction:column;gap:6px;min-height:0}
+.kid{display:flex;border:3px solid var(--k);border-radius:14px;overflow:hidden;min-height:0}
+.av{width:56px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:3px solid var(--k);color:var(--w);font:700 13px Fredoka,Arial,sans-serif}
+.rows{flex:1;display:flex;flex-direction:column;min-width:0}
+.row{flex:1;display:flex;align-items:center;gap:8px;padding:2px 8px 2px 6px;border-bottom:2px dashed var(--k);min-height:0}
 .row:last-child{border-bottom:0}
-.lab{width:46px;font:700 11px Arial,sans-serif;flex:none}
-.txt{flex:1;font:700 15px/1.1 Arial,sans-serif}
-.txt.none{font-weight:400}
-.badge{width:30px;height:30px;border-radius:50%;border:3px solid var(--k);display:flex;align-items:center;justify-content:center;font:900 14px "Arial Black",Arial,sans-serif;flex:none}
-.off{background:var(--k);color:var(--w)}
-.flag{background:var(--y)}
-.dinner{background:var(--g);color:var(--w);display:flex;align-items:center;gap:10px;padding:0 14px;height:46px;flex:none;border-top:4px solid var(--k)}
-.dinner small{font:700 12px Arial,sans-serif}
-.dinner b{font:900 21px "Arial Black",Arial,sans-serif}
-.right{display:flex;flex-direction:column;min-height:0}
-.tile{flex:1;padding:8px 12px;border-bottom:3px solid var(--k);display:flex;flex-direction:column;justify-content:center;gap:3px}
-.tile:last-child{border-bottom:0}
-.tile .d{font:900 18px "Arial Black",Arial,sans-serif}
-.tile .m{font:900 14px Arial,sans-serif;background:var(--g);color:var(--w);padding:3px 7px;display:inline-block;align-self:flex-start}
-.tile .a{font:700 13px/1.25 Arial,sans-serif}
-footer{grid-column:1/3;background:var(--k);color:var(--w);display:flex;align-items:center;gap:14px;padding:0 12px;font:700 12px Arial,sans-serif;white-space:nowrap;overflow:hidden}
-.sw{width:12px;height:12px;border:2px solid var(--w);border-radius:50%;display:inline-block;margin-right:4px;vertical-align:-2px}
-.msg{grid-column:1/3;display:flex;align-items:center;justify-content:center;font:700 20px Arial,sans-serif;padding:20px;text-align:center}
+.tx{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.lab{font:900 9.5px/1 Nunito,Arial,sans-serif;letter-spacing:.6px;text-transform:uppercase}
+.val{font:800 14.5px/1.08 Nunito,Arial,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.val.none{font-weight:700}
+.badge{width:28px;height:28px;border-radius:50%;border:2.5px solid var(--k);display:flex;align-items:center;justify-content:center;font:700 14px Fredoka,Arial,sans-serif;flex:none}
+.row.off{background:var(--k);color:var(--w)}
+.row.flag{background:var(--y)}
+.dinner{background:var(--g);color:var(--w);border:3px solid var(--k);border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 10px;height:50px;flex:none}
+.dinner small{font:900 10px Nunito,Arial,sans-serif;letter-spacing:.8px;text-transform:uppercase;display:block}
+.dinner b{font:700 21px/1 Fredoka,Arial,sans-serif}
+.dinner .night{margin-left:auto;text-align:right;font:800 12px/1.15 Nunito,Arial,sans-serif;max-width:46%}
+
+/* other days */
+.right{display:flex;flex-direction:column;gap:6px;min-height:0}
+.tile{flex:1;border:3px solid var(--k);border-radius:14px;padding:5px 9px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:0;overflow:hidden}
+.tile .d{display:flex;align-items:baseline;gap:6px;font:700 18px/1 Fredoka,Arial,sans-serif}
+.tile .d span{font:800 12px Nunito,Arial,sans-serif}
+.chip{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;background:var(--g);color:var(--w);border-radius:20px;padding:2px 9px 2px 4px;font:800 12.5px Nunito,Arial,sans-serif;max-width:100%;white-space:nowrap;overflow:hidden}
+.acts{display:flex;flex-wrap:wrap;gap:3px 10px;font:800 12px Nunito,Arial,sans-serif}
+.act{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--k);color:#fff;font:700 9px/11px Fredoka,Arial,sans-serif;text-align:center;flex:none}
+
+footer{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 4px;font:800 12px Nunito,Arial,sans-serif;white-space:nowrap;overflow:hidden}
+footer .lg{display:flex;align-items:center;gap:4px}
+footer .lg .badge{width:18px;height:18px;font-size:10px;border-width:2px}
+.msg{grid-column:1/3;grid-row:1/4;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;font:800 20px Nunito,Arial,sans-serif;text-align:center;border:3px solid var(--k);border-radius:16px}
 </style>
 </head>
 <body>
 <div id="stage"><div id="screen"></div></div>
 <script>
 /* ================= SETTINGS ================= */
-// Google Sheet "Publish to web" CSV link. Leave "" to use schedule.csv in this repo.
-// You can also pass it in the URL instead:  index.html?sheet=<published CSV link>
-const SHEET_CSV = "";
-const TIME_ZONE = "America/New_York"; // the display's server may be in another time zone
-const ROLLOVER_HOUR = 19;             // from 7 pm on, show tomorrow's plan
+const SHEET_ID  = "13nz1eZyT7KsEbGaDgzm7qpk6f2sX2CchRwcAsGO4LTo"; // the family Google Sheet
+const TAB       = "";   // "" = the first tab that has a "Child" header row (keep this week's tab first)
+const TIME_ZONE = "America/New_York";
+const ROLLOVER_HOUR = 19;  // from 7 pm on, show tomorrow
+// Display color for each person in the sheet's Legend (blue, red, green, yellow, black, white)
+const PEOPLE = {Ori:"blue", Navit:"green", Sapir:"red", Arielle:"yellow", Robkins:"black", Bus:"white"};
+// Other grown-ups who get a plain white badge when their name appears in a cell
+const HELPERS = ["Mark","Bachar","Laila","Pas","Jason","Nechama","Isaiah","Weber","Salzberg"];
+// Kid avatar colors, in sheet order
+const KID_COLORS = ["blue","red","green","black"];
 /* ============================================ */
 
-const COLORS={blue:"var(--b)",red:"var(--r)",green:"var(--g)",yellow:"var(--y)",black:"var(--k)",white:"var(--w)"};
+const C={blue:"#1b4fbf",red:"#d0201a",green:"#1c8a3c",yellow:"#f2c500",black:"#000",white:"#fff"};
+const K="#000",W="#fff";
 const WD={sun:0,mon:1,tue:2,wed:3,thu:4,fri:5,sat:6};
 const FULL=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
 const screen=document.getElementById("screen");
 
-function parseCSV(t){ // handles quoted cells with commas/newlines
-  const out=[];let row=[],cell="",q=false;
-  for(let i=0;i<t.length;i++){const c=t[i];
-    if(q){if(c=='"'){if(t[i+1]=='"'){cell+='"';i++}else q=false}else cell+=c}
-    else if(c=='"')q=true;else if(c==",") {row.push(cell);cell=""}
-    else if(c=="\n"||c=="\r"){if(c=="\r"&&t[i+1]=="\n")i++;row.push(cell);out.push(row);row=[];cell=""}
-    else cell+=c}
-  if(cell!==""||row.length){row.push(cell);out.push(row)}
-  return out.map(r=>r.map(s=>s.trim()));
+/* ---------- little pictures (32×32, Spectra colors only) ---------- */
+const S=(inner,sz=30,st=K)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 32 32" fill="none" stroke="${st}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">${inner}</svg>`;
+const ICON={
+ school:`<path d="M4 14 16 6l12 8" fill="${C.red}"/><rect x="6" y="14" width="20" height="14" fill="${W}"/><rect x="13" y="20" width="6" height="8" fill="${C.blue}"/><circle cx="16" cy="11.5" r="2" fill="${W}"/><path d="M16 6V2h5v3h-5"/><rect x="8.5" y="17" width="3" height="3" fill="${C.yellow}"/><rect x="20.5" y="17" width="3" height="3" fill="${C.yellow}"/>`,
+ home:`<path d="M4 15 16 5l12 10" fill="${C.blue}"/><rect x="7" y="14" width="18" height="14" fill="${C.yellow}"/><path d="M16 26.5c-3.5-2.4-5-4-5-6a2.4 2.4 0 0 1 5-1 2.4 2.4 0 0 1 5 1c0 2-1.5 3.6-5 6Z" fill="${C.red}"/>`,
+ star:`<path d="m16 3 3.8 8 8.7 1-6.4 6 1.7 8.6L16 22.4 8.2 26.6 9.9 18 3.5 12l8.7-1Z" fill="${C.yellow}"/>`,
+ soccer:`<circle cx="16" cy="16" r="12" fill="${W}"/><path d="m16 11 4.5 3.2-1.7 5.3h-5.6l-1.7-5.3Z" fill="${K}"/><path d="M16 11V4.5M20.5 14.2l6-2M18.8 19.5l3.6 5.4M13.2 19.5l-3.6 5.4M11.5 14.2l-6-2"/>`,
+ music:`<path d="M11 24V8l14-3v15" /><path d="M11 12l14-3"/><ellipse cx="8" cy="24" rx="3.5" ry="3" fill="${C.blue}"/><ellipse cx="22" cy="20.5" rx="3.5" ry="3" fill="${C.blue}"/>`,
+ guitar:`<path d="M19 13l8-8" stroke-width="3"/><path d="M25 3l4 4" stroke-width="3"/><path d="M17.5 11.5c-2-2-5-1-5.5 1.5-.3 1.4-1.4 2.2-2.8 2.3C5.6 15.6 3.5 19 5 22.5c.9 2 2.6 3.6 4.5 4.5 3.5 1.5 6.9-.6 7.2-4.2.1-1.4.9-2.5 2.3-2.8 2.5-.5 3.5-3.5 1.5-5.5Z" fill="${C.yellow}"/><circle cx="13" cy="19" r="2.4" fill="${K}"/>`,
+ dance:`<path d="M6 22c0-3 3-4 6-4l6-7c2-2 5-1 6 1 1.5 3-1 6-4 8l-5 4c-2 1.5-4 2-6 2-2 0-3-2-3-4Z" fill="${C.red}"/><path d="M14 17c3 0 6-2 8-4M10 5l1.5 3M15 3v3.5M20 4.5l-1.5 3"/>`,
+ boxing:`<path d="M9 18V11a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v4a6 6 0 0 1-6 6h-1" fill="${C.red}"/><path d="M8 13h4a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-1a3 3 0 0 1 3-3Z" fill="${C.red}"/><rect x="9" y="21" width="13" height="7" rx="1.5" fill="${W}"/><path d="M12 24.5h7"/>`,
+ math:`<rect x="4" y="4" width="24" height="24" rx="5" fill="${C.blue}"/><path d="M10 9.5v6M7 12.5h6M19 12.5h6M8 19.5l4 4M12 19.5l-4 4M19 20h6M19 23.5h6" stroke="${W}" stroke-width="2.4"/>`,
+ clue:`<circle cx="13" cy="13" r="8" fill="${C.yellow}"/><circle cx="13" cy="13" r="4.5" fill="${W}"/><path d="m19 19 8 8" stroke-width="4"/>`,
+ drama:`<path d="M5 6h14v8a7 7 0 0 1-14 0Z" fill="${C.yellow}"/><path d="M13 13h14v8a7 7 0 0 1-14 0Z" fill="${C.red}"/><path d="M8.5 10.5h2M13.5 10.5h2M17 17.5h2M22 17.5h2M18 24c1.5-1.5 3.5-1.5 5 0M9 15c1.5 1.5 3.5 1.5 5 0"/>`,
+ book:`<path d="M4 7c4-2 8-2 12 1v19c-4-3-8-3-12-1Z" fill="${C.green}"/><path d="M28 7c-4-2-8-2-12 1v19c4-3 8-3 12-1Z" fill="${C.blue}"/>`,
+ swim:`<circle cx="22" cy="8" r="3" fill="${C.yellow}"/><path d="M6 17l7-5 4 4"/><path d="M3 22c3 0 3-2 6.5-2S13 22 16 22s3-2 6.5-2 3.5 2 6.5 2M3 27c3 0 3-2 6.5-2S13 27 16 27s3-2 6.5-2 3.5 2 6.5 2" stroke="${C.blue}" stroke-width="2.6"/>`,
+ bball:`<circle cx="16" cy="16" r="12" fill="${C.red}"/><path d="M4 16h24M16 4v24M8 7.5c4 4.5 4 12.5 0 17M24 7.5c-4 4.5-4 12.5 0 17"/>`,
+ bus:`<rect x="4" y="5" width="24" height="19" rx="4" fill="${C.yellow}"/><rect x="7" y="9" width="18" height="6" rx="1" fill="${W}"/><path d="M16 9v6"/><circle cx="10" cy="25.5" r="2.6" fill="${K}"/><circle cx="22" cy="25.5" r="2.6" fill="${K}"/><path d="M8 19.5h2M22 19.5h2"/>`,
+ car:`<path d="M5 20v-4l3-6h16l3 6v4Z" fill="${C.blue}"/><path d="M10 11h12l2 5H8Z" fill="${W}"/><circle cx="10" cy="22" r="3" fill="${K}"/><circle cx="22" cy="22" r="3" fill="${K}"/>`,
+ sun:`<circle cx="16" cy="16" r="6.5" fill="${C.yellow}"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/><path d="M13.5 15h.1M18.5 15h.1M13.5 18c1.5 1.3 3.5 1.3 5 0"/>`,
+ none:`<circle cx="16" cy="16" r="3" fill="${K}" stroke="none"/>`,
+ // food
+ plate:`<circle cx="16" cy="17" r="10" fill="${W}"/><circle cx="16" cy="17" r="6" fill="${C.yellow}"/><path d="M3 5v7a2 2 0 0 0 2 2v13M5 5v5M7 5v7a2 2 0 0 1-2 2M29 5c-2 1-3 4-3 8h3v14" />`,
+ schnitzel:`<path d="M6 21c-3-5 1-12 9-13 7-1 13 3 12 9-1 5-7 8-13 7-4 0-7-1-8-3Z" fill="${C.yellow}"/><path d="M11 14h.1M16 12h.1M21 15h.1M14 19h.1M19 20h.1" stroke-width="3"/><path d="M22 6.5a3 3 0 0 1 5 2.5l-2.5.5Z" fill="${C.green}"/>`,
+ grill:`<path d="M5 13h22a11 11 0 0 1-22 0Z" fill="${K}"/><path d="M8 24l-3 5M24 24l3 5M16 24v5"/><path d="M4 13h24" stroke-width="3"/><path d="M11 9c-1-2 1-3 0-5M16 9c-1-2 1-3 0-5M21 9c-1-2 1-3 0-5" stroke="${C.red}"/>`,
+ sushi:`<ellipse cx="16" cy="21" rx="12" ry="6" fill="${K}"/><path d="M4 13v8M28 13v8" /><ellipse cx="16" cy="13" rx="12" ry="6" fill="${K}"/><ellipse cx="16" cy="13" rx="9" ry="4" fill="${W}"/><ellipse cx="16" cy="13" rx="4" ry="2" fill="${C.red}"/>`,
+ fish:`<path d="M4 16c4-7 13-8 19-2l5-4v12l-5-4c-6 6-15 5-19-2Z" fill="${C.red}"/><circle cx="10" cy="15" r="1.3" fill="${K}"/><path d="M15 12c1 2.5 1 5.5 0 8"/>`,
+ pizza:`<path d="M16 29 4 7c8-4 16-4 24 0Z" fill="${C.yellow}"/><path d="M4 7c8-4 16-4 24 0" stroke-width="4" stroke="${C.red}"/><circle cx="14" cy="13" r="2" fill="${C.red}"/><circle cx="19" cy="17" r="2" fill="${C.red}"/><circle cx="16" cy="22" r="1.6" fill="${C.green}"/>`,
+ pasta:`<path d="M3 16h26a13 11 0 0 1-26 0Z" fill="${W}"/><path d="M8 16c0-4 4-6 8-3s8 1 8 3M10 16c1-3 4-3 6-1s5 2 7 1" stroke="${C.yellow}" stroke-width="2.6"/><circle cx="12" cy="12.5" r="2.4" fill="${C.red}"/><circle cx="20" cy="12" r="2.4" fill="${C.red}"/>`,
+ taco:`<path d="M3 24a13 13 0 0 1 26 0Z" fill="${C.yellow}"/><path d="M7 18c2-3 4-1 6-3s4 1 6-1 4 1 6 2" stroke="${C.green}" stroke-width="3"/><circle cx="12" cy="20" r="1.5" fill="${C.red}"/><circle cx="19" cy="19" r="1.5" fill="${C.red}"/>`,
+ sukkah:`<path d="M3 11c3-4 6-4 9-1 3-4 6-4 9-1 3-3 5-2 8 0" stroke="${C.green}" stroke-width="3.5"/><path d="M5 11v17M27 11v17M4 28h24"/><path d="M5 12h22v4H5Z" fill="${C.green}"/><circle cx="12" cy="20" r="2" fill="${C.red}"/><circle cx="20" cy="21" r="2" fill="${C.yellow}"/><path d="M12 16v2M20 16v3"/>`,
+ candles:`<rect x="7" y="13" width="6" height="15" rx="1" fill="${W}"/><rect x="19" y="13" width="6" height="15" rx="1" fill="${W}"/><path d="M10 4c-2 3-2 5 0 6 2-1 2-3 0-6ZM22 4c-2 3-2 5 0 6 2-1 2-3 0-6Z" fill="${C.yellow}"/><path d="M10 10v3M22 10v3"/>`,
+ burger:`<path d="M5 14a11 8 0 0 1 22 0Z" fill="${C.yellow}"/><path d="M4 18h24" stroke="${C.green}" stroke-width="3"/><rect x="5" y="19.5" width="22" height="3.5" rx="1.5" fill="${K}"/><path d="M5 24h22a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3Z" fill="${C.yellow}"/>`,
+ heart:`<path d="M16 27C8 21.5 4 17.5 4 12.5a6 6 0 0 1 12-2 6 6 0 0 1 12 2c0 5-4 9-12 14.5Z" fill="${C.red}"/>`,
+ house:`<path d="M5 14 16 5l11 9" fill="${C.red}"/><rect x="8" y="14" width="16" height="13" fill="${W}"/><rect x="14" y="19" width="5" height="8" fill="${C.green}"/>`
+};
+const icon=(n,sz)=>S(ICON[n]||ICON.star,sz);
+const FACE=(col,sz=34)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="${W}" stroke="${K}" stroke-width="2.2"/><circle cx="11.5" cy="14" r="1.9" fill="${K}"/><circle cx="20.5" cy="14" r="1.9" fill="${K}"/><path d="M11 19.5c2.8 3 7.2 3 10 0" stroke="${K}" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="8.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><circle cx="23.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><path d="M5 11c2-6 7-8 11-8s9 2 11 8c-3-2-7-3-11-3s-8 1-11 3Z" fill="${col}" stroke="${K}" stroke-width="2"/></svg>`;
+
+const ACT=[[/soccer|football/i,"soccer"],[/guitar/i,"guitar"],[/music|piano|violin|choir|sing|band/i,"music"],[/danc|ballet/i,"dance"],[/box/i,"boxing"],[/math/i,"math"],[/clue/i,"clue"],[/drama|rehears|theat|play\b/i,"drama"],[/tutor|homework|read|hebrew/i,"book"],[/swim/i,"swim"],[/basket/i,"bball"],[/no school/i,"sun"],[/\bbus\b/i,"bus"]];
+const FOOD=[[/schnitzel|cutlet|chicken|nugget/i,"schnitzel"],[/grill|bbq|barbecue|steak/i,"grill"],[/sushi/i,"sushi"],[/salmon|fish/i,"fish"],[/pizza/i,"pizza"],[/pasta|spaghetti|noodle|mac/i,"pasta"],[/taco|burrito|mexican/i,"taco"],[/burger/i,"burger"],[/sukk|sukkah/i,"sukkah"],[/shabbat|atzeret|simchat|chag|yom tov|holiday|rosh|seder/i,"candles"],[/out|restaurant|takeout/i,"house"]];
+const pick=(list,t,def)=>{for(const [re,n] of list) if(re.test(t)) return n; return def};
+const firstWord=v=>{const w=v.replace(/^[\d:.\s-]+(am|pm)?\s*/i,"").split(/[.,(\n]/)[0].trim().split(/\s+/);return w.slice(0,w[0]&&w[0].length<4?2:1).join(" ")};
+
+/* ---------- read the Google Sheet (values + cell colors + hidden rows/cols) ---------- */
+function hex2rgb(h){h=(h||"").replace(/^#|^FF(?=[0-9A-F]{6}$)/i,"");if(h.length!==6)return null;return [0,2,4].map(i=>parseInt(h.substr(i,2),16))}
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+function parseSheet(wb){
+  const names=TAB?[TAB]:wb.SheetNames;
+  for(const name of names){
+    const ws=wb.Sheets[name]; if(!ws||!ws["!ref"]) continue;
+    const R=XLSX.utils.decode_range(ws["!ref"]);
+    const cell=(r,c)=>ws[XLSX.utils.encode_cell({r,c})];
+    const txt=(r,c)=>{const x=cell(r,c);return x&&x.v!=null?String(x.w??x.v).replace(/\s*\n\s*/g," ").replace(/\s+/g," ").trim():""};
+    const bg=(r,c)=>{const x=cell(r,c);return x&&x.s&&x.s.patternType!=="none"&&x.s.fgColor?hex2rgb(x.s.fgColor.rgb):null};
+    const hidR=new Set((ws["!rows"]||[]).map((x,i)=>x&&x.hidden?i:-1)),hidC=new Set((ws["!cols"]||[]).map((x,i)=>x&&x.hidden?i:-1));
+    let hr=-1;for(let r=0;r<=Math.min(R.e.r,15);r++) if(/^child/i.test(txt(r,0))){hr=r;break}
+    if(hr<0) continue;
+    const days=[];for(let c=1;c<=R.e.c;c++){const n=WD[txt(hr,c).slice(0,3).toLowerCase()];if(n!==undefined&&!hidC.has(c))days.push({c,n})}
+    if(!days.length) continue;
+    // legend
+    const legend=[];
+    for(let r=hr+1;r<=R.e.r;r++) if(/^legend/i.test(txt(r,0))){
+      for(let rr=r+1;rr<=r+3;rr++) for(let c=0;c<=R.e.c;c++){const t=txt(rr,c),col=bg(rr,c);if(t&&col)legend.push({name:t,col})}
+      break;
+    }
+    const D={tab:name,days:days.map(d=>d.n),rows:[],dinner:days.map(()=>""),night:days.map(()=>""),legend};
+    let kid="";
+    for(let r=hr+1;r<=R.e.r;r++){
+      const a=txt(r,0);
+      if(/^legend/i.test(a)) break;
+      if(a) kid=a;
+      if(hidR.has(r)) continue;
+      const vals=days.map(d=>({t:txt(r,d.c),bg:bg(r,d.c)}));
+      if(/dinner/i.test(a)){D.dinner=vals.map(v=>v.t);continue}
+      if(/night|activity/i.test(a)&&!txt(r,1)){D.night=vals.map(v=>v.t);D.nightLabel=a;continue}
+      const item=txt(r,1); if(!item||!kid) continue;
+      D.rows.push({kid,item,vals});
+    }
+    return D;
+  }
+  throw new Error("Couldn't find a tab with a “Child” header row");
 }
 
-function toData(rows){
-  const head=rows.shift(), dayCols=[];
-  head.forEach((h,i)=>{const n=WD[h.slice(0,3).toLowerCase()];if(i>=2&&n!==undefined)dayCols.push({i,n})});
-  if(!dayCols.length) throw new Error("No day columns (Tue, Wed, …) found in the header row");
-  const d={days:dayCols.map(c=>c.n),rows:[],dinner:dayCols.map(()=>""),drivers:[]};
-  rows.forEach(r=>{
-    const kid=r[0]||"",item=r[1]||"",vals=dayCols.map(c=>r[c.i]||"");
-    if(!kid&&!item&&!vals.join(""))return;
-    if(/^dinner$/i.test(kid)) d.dinner=vals;
-    else if(/^driver$/i.test(kid)){const col=(r[2]||"").toLowerCase();if(item&&COLORS[col])d.drivers.push([item,col])}
-    else if(kid) d.rows.push([kid,item,vals]);
-  });
-  d.drivers.sort((a,b)=>(a[1]==="white")-(b[1]==="white")); // colored drivers win over helpers
-  return d;
+/* who's driving: cell color matched to the sheet's Legend first, then names in the text */
+function who(v,D){
+  const nameRe=n=>new RegExp("\\b"+n.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
+  if(v.bg){
+    if(v.bg.every(x=>x<40)) return {na:true};
+    let best=null,bd=1e9;for(const L of D.legend){const d=dist(v.bg,L.col);if(d<bd){bd=d;best=L}}
+    if(best&&bd<34){
+      if(/need|figure/i.test(best.name)) return {flag:true};
+      if(/fill/i.test(best.name)) best=null; else {const p=Object.keys(PEOPLE).find(n=>nameRe(n).test(best.name));return {name:p||best.name,color:PEOPLE[p]||"white"}}
+    }
+  }
+  for(const n of Object.keys(PEOPLE)) if(nameRe(n).test(v.t)) return {name:n,color:PEOPLE[n]};
+  for(const n of HELPERS) if(nameRe(n).test(v.t)) return {name:n,color:"white"};
+  return null;
+}
+function badge(w,sz){
+  if(!w||!w.name) return "";
+  if(/^bus$/i.test(w.name)) return icon("bus",sz||28);
+  const bgc=C[w.color]||W,fg=(w.color==="yellow"||w.color==="white")?K:W;
+  return `<span class="badge" style="background:${bgc};color:${fg}${sz?`;width:${sz}px;height:${sz}px;font-size:${sz*.5}px`:""}">${esc(w.name[0].toUpperCase())}</span>`;
 }
 
 function nowParts(){
@@ -94,55 +195,63 @@ function nowParts(){
 }
 
 function render(D){
-  const P=nowParts();
-  let target=P.hour>=ROLLOVER_HOUR?(P.wd+1)%7:P.wd;
-  // focus = first schedule day on/after target
-  let best=0,bestGap=99;D.days.forEach((n,i)=>{const g=(n-target+7)%7;if(g<bestGap){bestGap=g;best=i}});
-  const f=best, gapFromToday=(D.days[f]-P.wd+7)%7;
-  const dd=new Date(P.date);dd.setDate(dd.getDate()+gapFromToday);
-  const label=gapFromToday===0?"":gapFromToday===1?" (tomorrow)":" (next school day)";
+  const P=nowParts(), target=P.hour>=ROLLOVER_HOUR?(P.wd+1)%7:P.wd;
+  let f=0,g0=99;D.days.forEach((n,i)=>{const g=(n-target+7)%7;if(g<g0){g0=g;f=i}});
+  const gap=(D.days[f]-P.wd+7)%7, dd=new Date(P.date);dd.setDate(dd.getDate()+gap);
+  const dateOf=i=>{const x=new Date(dd);x.setDate(x.getDate()+D.days[i]-D.days[f]);return x}; // same week as the focus day
+  const label=gap===0?"Today":gap===1?"Tomorrow":"Next school day";
+  const empty=t=>!t||/^[—–-]+$/.test(t);
+  const kids=[...new Set(D.rows.map(r=>r.kid))];
+  const kc=k=>C[KID_COLORS[kids.indexOf(k)%KID_COLORS.length]];
 
-  const who=v=>D.drivers.find(([n])=>new RegExp("\\b"+n.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i").test(v));
-  const badge=v=>{const m=who(v);if(!m)return"";const [n,c]=m;
-    return `<span class="badge" style="background:${COLORS[c]};color:${c==="yellow"||c==="white"?"#000":"#fff"}">${esc(n[0].toUpperCase())}</span>`};
-  const empty=v=>!v||v==="—"||v==="-";
-  const kids=[...new Set(D.rows.map(r=>r[0]))];
-  const kidsHTML=kids.map(k=>{const rs=D.rows.filter(r=>r[0]===k);
-    return `<div class="kid" style="flex:${rs.length===1?1:rs.length*1.15}"><div class="kn"><span>${esc(k)}</span></div><div class="rows">`+
-      rs.map(r=>{const v=r[2][f]||"",off=/NO SCHOOL/i.test(v),fl=/\?|NEEDS/i.test(v);
-        return `<div class="row ${off?"off":""} ${fl?"flag":""}"><span class="lab">${esc(r[1])}</span><span class="txt ${empty(v)?"none":""}">${esc(empty(v)?"—":v)}</span>${off?"":badge(v)}</div>`}).join("")+`</div></div>`}).join("");
+  const kidHTML=kids.map(k=>{
+    const rs=D.rows.filter(r=>r.kid===k);
+    return `<div class="kid" style="flex:${rs.length}"><div class="av" style="background:${kc(k)}">${FACE(kc(k),rs.length>1?36:28)}<span>${esc(k)}</span></div><div class="rows">`+
+      rs.map(r=>{
+        const v=r.vals[f], w=who(v,D), off=/no school/i.test(v.t), na=w&&w.na, none=empty(v.t)||na;
+        const fl=!off&&((w&&w.flag)||/\?|needs/i.test(v.t));
+        const kind=/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
+        const ic=off?"sun":none?"none":kind==="after"?pick(ACT,v.t,"star"):kind;
+        return `<div class="row ${off?"off":""} ${fl?"flag":""}">${off?S(ICON.sun,28,W):icon(ic,28)}<div class="tx"><span class="lab">${esc(r.item)}</span><span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span></div>${off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W}">?</span>`:badge(w)}</div>`;
+      }).join("")+`</div></div>`;
+  }).join("");
 
-  // tiles: first word of each kid's "After" activity
-  const after=kids.map(k=>D.rows.find(r=>r[0]===k&&/after/i.test(r[1])));
-  const short=i=>after.map((r,j)=>{const v=r?r[2][i]:"";if(empty(v)||/NO SCHOOL/i.test(v))return"";
-    return `<b>${esc(kids[j][0])}</b> ${esc(v.split(/[.,(]/)[0].trim().split(/\s+/)[0])}`}).filter(Boolean).join(" &nbsp; ")||"No after-school";
-  const tiles=D.days.map((n,i)=>i===f?"":`<div class="tile"><div class="d">${FULL[n]}</div>${D.dinner[i]?`<span class="m">${esc(D.dinner[i])}</span>`:""}<div class="a">${short(i)}</div></div>`).join("");
+  const din=D.dinner[f]||"", night=D.night[f]||"";
+  const dinnerHTML=`<div class="dinner"><span style="background:${W};border-radius:50%;padding:3px;border:2px solid ${K}">${icon(pick(FOOD,din,"plate"),32)}</span><div><small>Family dinner</small><b>${esc(din||"—")}</b></div>${night?`<div class="night">${icon("heart",16).replace("<svg",'<svg style="display:inline-block;vertical-align:-3px"')} ${esc(D.nightLabel||"Night")}<br>${esc(night)}</div>`:""}</div>`;
 
-  const legend=D.drivers.filter(d=>d[1]!=="white").map(([n,c])=>`<span><i class="sw" style="background:${COLORS[c]}"></i>${esc(n)}</span>`).join("");
-  screen.innerHTML=`<div class="top"><div class="day">${FULL[D.days[f]]}</div><div class="date">${dd.toLocaleDateString("en-US",{month:"long",day:"numeric"})}${label}</div><div class="ttl">Salzberg<br>Weekly Plan</div></div>
-   <div class="left"><div class="kids">${kidsHTML}</div><div class="dinner"><small>Dinner</small><b>${esc(D.dinner[f]||"—")}</b></div></div>
+  const tiles=D.days.map((n,i)=>{ if(i===f) return "";
+    const acts=kids.map(k=>{const r=D.rows.find(r=>r.kid===k&&/after/i.test(r.item)&&!empty(r.vals[i].t)&&!(r.vals[i].bg&&r.vals[i].bg.every(x=>x<40)));
+      if(!r) return "";const t=r.vals[i].t;
+      return `<span class="act"><span class="dot" style="background:${kc(k)}">${esc(k[0])}</span>${icon(pick(ACT,t,"star"),17)}${esc(firstWord(t))}</span>`}).join("");
+    const d=D.dinner[i];
+    return `<div class="tile"><div class="d">${FULL[n]}<span>${dateOf(i).getDate()}</span></div>${d?`<span class="chip"><span style="background:#fff;border-radius:50%;display:flex">${icon(pick(FOOD,d,"plate"),20)}</span>${esc(d)}</span>`:""}<div class="acts">${acts||`<span class="act">${icon("sun",17)}Free afternoon</span>`}</div></div>`;
+  }).join("");
+
+  const seen=new Set();
+  const legend=D.legend.map(L=>{const p=Object.keys(PEOPLE).find(n=>new RegExp("\\b"+n+"\\b","i").test(L.name));return p}).filter(p=>p&&!seen.has(p)&&seen.add(p));
+  const lgHTML=(legend.length?legend:Object.keys(PEOPLE)).map(p=>`<span class="lg">${badge({name:p,color:PEOPLE[p]},18)}${esc(p)}</span>`).join("");
+
+  screen.innerHTML=`
+   <div class="top">${icon("sun",44)}<div class="day">${FULL[D.days[f]]}</div><div class="date">${label} · ${dd.toLocaleDateString("en-US",{month:"long",day:"numeric"})}</div>
+     <div class="ttl">Salzberg<br>Family Plan ${icon("house",38)}</div></div>
+   <div class="left">${kidHTML}${dinnerHTML}</div>
    <div class="right">${tiles}</div>
-   <footer>Driver: ${legend}<span style="margin-left:auto">${kids.map(k=>esc(k[0])+" "+esc(k)).join(" &nbsp; ")}${D.stale?" &nbsp;· SHEET OFFLINE":""}</span></footer>`;
+   <footer>${icon("car",18)}Who's driving:${lgHTML}<span style="margin-left:auto;display:flex;align-items:center;gap:4px">${icon("star",14)}${esc(D.tab)}</span></footer>`;
 }
 
-async function getCSV(url){
-  const r=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
-  if(!r.ok)throw new Error("HTTP "+r.status);
-  const t=await r.text();if(/^\s*</.test(t))throw new Error("Got a web page, not CSV — use the 'Publish to web' CSV link");
-  return t;
+function showError(msg){
+  screen.innerHTML=`<div class="msg">${icon("clue",56)}<div>Couldn't read the family sheet</div><div style="font-size:14px;font-weight:700">${esc(msg)}</div></div>`;
 }
 async function load(){
-  const sheet=new URLSearchParams(location.search).get("sheet")||SHEET_CSV;
-  let D;
   try{
-    if(!sheet)throw 0;
-    D=toData(parseCSV(await getCSV(sheet)));
-  }catch(e){
-    if(sheet)console.warn("Sheet failed, using schedule.csv:",e);
-    try{D=toData(parseCSV(await getCSV("schedule.csv")));D.stale=!!sheet}
-    catch(e2){screen.innerHTML=`<div class="msg">Couldn't load the schedule.<br>${esc(e2.message||e2)}</div>`;document.body.dataset.ready="error";return}
-  }
-  render(D);document.body.dataset.ready="1";
+    if(!window.XLSX) throw new Error("Spreadsheet reader didn't load");
+    const src=new URLSearchParams(location.search).get("xlsx")||`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=xlsx&t=${Date.now()}`;
+    const r=await fetch(src,{cache:"no-store"}); if(!r.ok) throw new Error("Google returned "+r.status+" — is the sheet shared “Anyone with the link”?");
+    const wb=XLSX.read(await r.arrayBuffer(),{cellStyles:true});
+    render(parseSheet(wb));
+  }catch(e){console.error(e);showError(e.message||String(e))}
+  try{await document.fonts.ready}catch(e){}
+  document.body.dataset.ready="1";
 }
 function fit(){const s=Math.min(innerWidth/800,innerHeight/480);document.getElementById("stage").style.transform="scale("+s+")"}
 addEventListener("resize",fit);fit();load();

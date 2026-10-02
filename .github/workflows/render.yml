@@ -1,7 +1,7 @@
 name: Render display image
 on:
   schedule:
-    - cron: "7,22,37,52 * * * *"   # every 15 min, off the top of the hour when GitHub is busiest
+    - cron: "7,22,37,52 * * * *"   # backup only: GitHub often skips these; the "next" job keeps the 15-minute rhythm
   workflow_dispatch:
     inputs:
       preview:
@@ -16,6 +16,7 @@ on:
     branches: [main]
 permissions:
   contents: write
+  actions: write   # lets the "next" job start the following run
 concurrency:
   group: render
   cancel-in-progress: true
@@ -57,3 +58,19 @@ jobs:
           git add .
           git commit -qm "Render $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" display
+
+  # Waits until just after the next quarter hour, then starts this workflow again, so the display
+  # (and its photo) refreshes every 15 minutes without relying on GitHub's schedule. A new run
+  # cancels a waiting one (concurrency above), so there is only ever one chain.
+  # To stop it: Actions -> Render display image -> "..." -> Disable workflow.
+  next:
+    needs: render
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for the next quarter hour
+        run: sleep $(( 900 - $(date +%s) % 900 + 60 ))
+      - name: Start the next render
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run render.yml --repo "${{ github.repository }}" --ref main

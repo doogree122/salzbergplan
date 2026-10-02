@@ -1,12 +1,15 @@
 # Picks a photo from the shared Google Photos album and makes photo.png for the display:
-# cropped to the photo panel (314x364) and dithered to the six E Ink Spectra 6 colors.
+# cropped around the faces in it (OpenCV YuNet face finder), sized for the photo panel (314x364), and dithered to the six E Ink Spectra 6 colors.
 # A different photo is chosen every 15 minutes. If anything fails, no photo.png is written and
 # the page shows a placeholder instead, so the plan itself always renders.
+# If no faces are found (or the face model is missing), it falls back to a crop that favors the top.
+# PREVIEW=1 also writes crops-preview.png: every album photo with its faces (red) and crop (green).
 import io, os, re, sys, urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from PIL import Image, ImageEnhance, ImageOps
 
+FACE_MODEL = "face_detection_yunet_2023mar.onnx"   # downloaded by the GitHub job
 ALBUM = os.environ.get("ALBUM_URL") or (
     "https://photos.google.com/share/AF1QipMp2zhF1zyFHB2Lj5cv5UZY24D3LplQbN8BrczfrZw7p13bRqsmQ66JyAZAa3y2XQ"
     "?key=UG9hY1lYcGI4aDFxTEc3Q3FWOURRaWlFaEwxcjRR")
@@ -35,21 +38,101 @@ def dither(img):
     pal.putpalette(flat + flat[:3] * (256 - len(PALETTE)))
     return img.quantize(palette=pal, dither=Image.Dither.FLOYDSTEINBERG).convert("RGB")
 
+def find_faces(img):
+    """Face boxes (x, y, w, h) in img's pixels, biggest first. Background faces are dropped."""
+    try:
+        import cv2, numpy as np
+    except ImportError:
+        return []
+    if not os.path.exists(FACE_MODEL):
+        return []
+    scale = min(1.0, 960 / max(img.size))   # YuNet is quick and accurate at about this size
+    small = img.resize((round(img.width * scale), round(img.height * scale))) if scale < 1 else img
+    bgr = cv2.cvtColor(np.array(small), cv2.COLOR_RGB2BGR)
+    det = cv2.FaceDetectorYN.create(FACE_MODEL, "", small.size, 0.7, 0.3, 5000)
+    _, found = det.detect(bgr)
+    if found is None:
+        return []
+    faces = sorted(([float(v) / scale for v in f[:4]] for f in found), key=lambda f: -f[2] * f[3])
+    big = faces[0][2]
+    return [f for f in faces if f[2] >= big * 0.35]   # people far in the background don't steer the crop
+
+def crop_box(w, h, faces):
+    """The crop (left, top, right, bottom) with the panel's shape that keeps the faces in frame."""
+    aspect = SIZE[0] / SIZE[1]
+    cw = min(w, h * aspect); ch = cw / aspect               # the biggest crop that fits
+    if not faces:
+        left, top = (w - cw) / 2, (h - ch) * 0.38          # favor the top, where faces usually are
+        return (left, top, left + cw, top + ch)
+    # everyone's heads plus some room: hair above, shoulders below, a little on each side
+    fx0 = min(f[0] - f[2] * 0.5 for f in faces); fx1 = max(f[0] + f[2] * 1.5 for f in faces)
+    fy0 = min(f[1] - f[3] * 0.6 for f in faces); fy1 = max(f[1] + f[3] * 2.2 for f in faces)
+    # zoom in when the faces are small, but never closer than half the full frame
+    need = max(fx1 - fx0, (fy1 - fy0) * aspect, cw * 0.5)
+    if need < cw:
+        cw = need; ch = cw / aspect
+    if fx1 - fx0 <= cw:
+        cx = (fx0 + fx1) / 2
+    else:
+        # the group is wider than the crop: slide across and keep the most (and biggest) faces whole
+        def score(left):
+            return sum(f[2] * f[3] for f in faces if f[0] >= left and f[0] + f[2] <= left + cw)
+        lefts = [max(0.0, min(w - cw, f[0] - f[2] * 0.3)) for f in faces] + \
+                [max(0.0, min(w - cw, f[0] + f[2] * 1.3 - cw)) for f in faces]
+        best = max(lefts, key=lambda l: (score(l), -abs(l + cw / 2 - (fx0 + fx1) / 2)))
+        cx = best + cw / 2
+    face_mid = sum(f[1] + f[3] / 2 for f in faces) / len(faces)
+    left = max(0.0, min(w - cw, cx - cw / 2))
+    top = max(0.0, min(h - ch, face_mid - ch * 0.38))      # faces sit a bit above the middle
+    return (left, top, left + cw, top + ch)
+
+def prepare(img):
+    img = ImageOps.exif_transpose(img).convert("RGB")
+    faces = find_faces(img)
+    box = crop_box(img.width, img.height, faces)
+    out = img.crop(tuple(round(v) for v in box)).resize(SIZE, Image.Resampling.LANCZOS)
+    out = ImageEnhance.Color(out).enhance(1.4)       # e-ink colors are muted; push them a bit
+    out = ImageEnhance.Contrast(out).enhance(1.15)
+    return dither(out), faces, box, img
+
+def preview(photos):
+    from PIL import ImageDraw
+    cells = []
+    for u in photos:
+        try:
+            done, faces, box, img = prepare(Image.open(io.BytesIO(get(u + "=w1200-h1200"))))
+        except Exception as e:
+            print("preview skipped a photo:", e, file=sys.stderr); continue
+        t = 300 / img.height
+        thumb = img.resize((round(img.width * t), 300)); d = ImageDraw.Draw(thumb)
+        for x, y, fw, fh in faces:
+            d.rectangle([x * t, y * t, (x + fw) * t, (y + fh) * t], outline=(255, 0, 0), width=3)
+        d.rectangle([v * t for v in box], outline=(0, 255, 0), width=4)
+        cell = Image.new("RGB", (thumb.width + 10 + round(SIZE[0] * 300 / SIZE[1]), 300), "white")
+        cell.paste(thumb, (0, 0)); cell.paste(done.resize((round(SIZE[0] * 300 / SIZE[1]), 300)), (thumb.width + 10, 0))
+        cells.append(cell)
+    if not cells:
+        return
+    cols, cw = 3, max(c.width for c in cells)
+    sheet = Image.new("RGB", (cols * (cw + 20), -(-len(cells) // cols) * 320), "white")
+    for i, c in enumerate(cells):
+        sheet.paste(c, ((i % cols) * (cw + 20), (i // cols) * 320))
+    sheet.save("crops-preview.png", optimize=True)
+    print(f"crops-preview.png <- {len(cells)} photos")
+
 def main():
     photos = album_photos()
     print(f"found {len(photos)} photos in the album")
     if not photos:
         return
+    if os.environ.get("PREVIEW") == "1":
+        preview(photos)
     now = datetime.now(ZoneInfo("America/New_York"))
     slot = int(now.timestamp()) // (60 * CHANGE_EVERY_MINUTES)
     idx = (slot * 7919) % len(photos)   # step through the album in a shuffled-looking but stable order
-    img = Image.open(io.BytesIO(get(photos[idx] + "=w1200-h1200")))
-    img = ImageOps.exif_transpose(img).convert("RGB")
-    img = ImageOps.fit(img, SIZE, Image.Resampling.LANCZOS, centering=(0.5, 0.38))  # favor the top, where faces usually are
-    img = ImageEnhance.Color(img).enhance(1.4)       # e-ink colors are muted; push them a bit
-    img = ImageEnhance.Contrast(img).enhance(1.15)
-    dither(img).save("photo.png", optimize=True)
-    print(f"photo.png <- photo {idx + 1}/{len(photos)}")
+    done, faces, box, _ = prepare(Image.open(io.BytesIO(get(photos[idx] + "=w1200-h1200"))))
+    done.save("photo.png", optimize=True)
+    print(f"photo.png <- photo {idx + 1}/{len(photos)}, {len(faces)} face(s), crop {[round(v) for v in box]}")
 
 if __name__ == "__main__":
     try:

@@ -20,13 +20,15 @@ jobs:
           node-version: 20
       - name: Install Playwright
         run: npm install --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
+      - name: Pick this hour's family photo
+        run: pip install pillow && python3 photo.py
       - name: Screenshot the plan
         run: |
           python3 -m http.server 8000 >/dev/null 2>&1 &
           sleep 2
           node render.js
       - name: Snap to the six e-ink colors
-        run: pip install pillow && python3 quantize.py plan.png
+        run: python3 quantize.py plan.png
       - name: Publish plan.png to the display branch
         run: |
           mkdir out && cp plan.png out/ && cd out

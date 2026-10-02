@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salzberg Weekly Plan</title>
+<style>
+/* Six E Ink Spectra 6 colors only */
+:root{--k:#000;--w:#fff;--r:#d0201a;--y:#f2c500;--g:#1c8a3c;--b:#1b4fbf;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:#e9e9e9;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;color:var(--k)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background:#222}}
+#stage{width:800px;height:480px;flex:none;transform-origin:center}
+#screen{width:800px;height:480px;background:var(--w);border:4px solid var(--k);display:grid;grid-template-columns:1fr 292px;grid-template-rows:68px 1fr 26px;overflow:hidden}
+.top{grid-column:1/3;background:var(--y);border-bottom:4px solid var(--k);display:flex;align-items:center;padding:0 16px;gap:14px}
+.top .day{font:900 42px/1 "Arial Black",Arial,sans-serif;letter-spacing:-1px}
+.top .date{font:700 20px Arial,sans-serif}
+.top .ttl{margin-left:auto;text-align:right;font:900 15px/1.15 "Arial Black",Arial,sans-serif}
+.left{display:flex;flex-direction:column;border-right:4px solid var(--k);min-height:0}
+.kids{flex:1;display:flex;flex-direction:column;min-height:0}
+.kid{display:flex;border-bottom:3px solid var(--k);min-height:0}
+.kn{width:34px;background:var(--k);color:var(--w);display:flex;align-items:center;justify-content:center;font:900 15px "Arial Black",Arial,sans-serif;flex:none}
+.kn span{writing-mode:vertical-rl;transform:rotate(180deg)}
+.rows{flex:1;display:flex;flex-direction:column}
+.row{flex:1;display:flex;align-items:center;gap:8px;padding:3px 10px 3px 8px;border-bottom:2px solid var(--k)}
+.row:last-child{border-bottom:0}
+.lab{width:46px;font:700 11px Arial,sans-serif;flex:none}
+.txt{flex:1;font:700 15px/1.1 Arial,sans-serif}
+.txt.none{font-weight:400}
+.badge{width:30px;height:30px;border-radius:50%;border:3px solid var(--k);display:flex;align-items:center;justify-content:center;font:900 14px "Arial Black",Arial,sans-serif;flex:none}
+.off{background:var(--k);color:var(--w)}
+.flag{background:var(--y)}
+.dinner{background:var(--g);color:var(--w);display:flex;align-items:center;gap:10px;padding:0 14px;height:46px;flex:none;border-top:4px solid var(--k)}
+.dinner small{font:700 12px Arial,sans-serif}
+.dinner b{font:900 21px "Arial Black",Arial,sans-serif}
+.right{display:flex;flex-direction:column;min-height:0}
+.tile{flex:1;padding:8px 12px;border-bottom:3px solid var(--k);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.tile:last-child{border-bottom:0}
+.tile .d{font:900 18px "Arial Black",Arial,sans-serif}
+.tile .m{font:900 14px Arial,sans-serif;background:var(--g);color:var(--w);padding:3px 7px;display:inline-block;align-self:flex-start}
+.tile .a{font:700 13px/1.25 Arial,sans-serif}
+footer{grid-column:1/3;background:var(--k);color:var(--w);display:flex;align-items:center;gap:14px;padding:0 12px;font:700 12px Arial,sans-serif}
+.sw{width:12px;height:12px;border:2px solid var(--w);border-radius:50%;display:inline-block;margin-right:4px;vertical-align:-2px}
+</style>
+</head>
+<body>
+<div id="stage"><div id="screen">
+  <div class="top"><div class="day" id="day"></div><div class="date" id="date"></div><div class="ttl">Salzberg<br>Weekly Plan</div></div>
+  <div class="left"><div class="kids" id="kids"></div><div class="dinner"><small>Dinner</small><b id="din"></b></div></div>
+  <div class="right" id="right"></div>
+  <footer id="legend"></footer>
+</div></div>
+<script>
+/* ===== EDIT THIS BLOCK (mirrors the Google Sheet) ===== */
+const DAYS=["Tuesday","Wednesday","Thursday","Friday"];
+const DAYNUM=[2,3,4,5];
+const ROWS=[
+ ["Meitav","Drop-off",["Ori","Sapir","Ori","Sapir"]],
+ ["Meitav","Pickup",  ["Mark Cohen","BUS (Navit)","Laila?",""]],
+ ["Meitav","After",   ["—","Music 5:30-6. Navit takes, Jason Ossey brings home","Soccer, Navit 5:15 pm","—"]],
+ ["Kol","Drop-off",   ["NO SCHOOL","Bus (Navit takes)","Ori","Bus (Navit takes)"]],
+ ["Kol","Pickup",     ["—","CLUE rehearsal until 5","Navit 4 pm. Whole Weber carpool","Bachar, pick up at Starbucks ~2:30"]],
+ ["Kol","After",      ["—","Dance 6 pm. Navit brings, Pas brings home","Guitar 6 pm. Ori drives, Navit picks up","Math tutoring"]],
+ ["Havi","After",     ["Boxing. Ori brings home from Mazes","Music 5:30-6","Boxing. Salzberg pick up","—"]]
+];
+const DINNER=["Schnitzel Night","Grill","Sushi","Sukkot"];
+const SHORT=[["—","—","Boxing"],["Music","Dance","Music"],["Soccer","Guitar","Boxing"],["—","Math","—"]]; // Meitav, Kol, Havi
+const DRIVERS={Ori:"var(--b)",Navit:"var(--r)",Sapir:"var(--g)",Arielle:"var(--y)",Robkins:"var(--k)"};
+/* ====================================================== */
+
+const now=new Date(),t=now.getDay();
+let f=DAYNUM.indexOf(t);              // focus day: today, or next school day if today isn't a column
+if(f<0){f=DAYNUM.findIndex(n=>n>t);if(f<0)f=0}
+const dd=new Date(now);dd.setDate(now.getDate()+((DAYNUM[f]-t+7)%7));
+document.getElementById("day").textContent=DAYS[f];
+document.getElementById("date").textContent=dd.toLocaleDateString("en-US",{month:"long",day:"numeric"})+(DAYNUM[f]===t?"":" (next school day)");
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function badge(v){
+  const n=Object.keys(DRIVERS).find(x=>v.includes(x));
+  if(n) return `<span class="badge" style="background:${DRIVERS[n]};color:${n==="Arielle"?"#000":"#fff"}">${n[0]}</span>`;
+  return /[A-Za-z]/.test(v)&&v!=="NO SCHOOL"&&v!=="—"&&/(BUS|Mark|Bachar|Laila|Pas|Jason|Weber)/i.test(v)?`<span class="badge" style="background:#fff">${(v.match(/[A-Z]/)||["?"])[0]}</span>`:"";
+}
+const kids=[...new Set(ROWS.map(r=>r[0]))];
+document.getElementById("kids").innerHTML=kids.map(k=>{
+  const rs=ROWS.filter(r=>r[0]===k);
+  return `<div class="kid" style="flex:${rs.length===1?1:rs.length*1.15}"><div class="kn"><span>${k}</span></div><div class="rows">`+
+   rs.map(r=>{const v=r[2][f]||"";const off=/NO SCHOOL/i.test(v),fl=/\?|NEEDS/i.test(v);
+     return `<div class="row ${off?"off":""} ${fl?"flag":""}"><span class="lab">${r[1]}</span><span class="txt ${!v||v==="—"?"none":""}">${esc(v||"—")}</span>${off?"":badge(v)}</div>`}).join("")+`</div></div>`;
+}).join("");
+document.getElementById("din").textContent=DINNER[f];
+document.getElementById("right").innerHTML=DAYS.map((d,i)=>i===f?"":
+  `<div class="tile"><div class="d">${d}</div><span class="m">${esc(DINNER[i])}</span><div class="a">${["M","K","H"].map((c,j)=>SHORT[i][j]==="—"?"":`<b>${c}</b> ${SHORT[i][j]}`).filter(Boolean).join(" &nbsp; ")||"No after-school"}</div></div>`).join("");
+document.getElementById("legend").innerHTML='Driver: '+Object.entries(DRIVERS).map(([n,c])=>`<span><i class="sw" style="background:${c}"></i>${n}</span>`).join("")+'<span style="margin-left:auto">M Meitav &nbsp; K Kol &nbsp; H Havi</span>';
+function fit(){const s=Math.min(innerWidth/820,innerHeight/500,1.6);document.getElementById("stage").style.transform="scale("+s+")"}
+addEventListener("resize",fit);fit();
+</script>
+</body>
+</html>

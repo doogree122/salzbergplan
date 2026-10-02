@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salzberg Weekly Family Plan</title>
+<style>
+/* Only the six E Ink Spectra 6 colors. */
+:root{--k:#000;--w:#fff;--r:#d0201a;--y:#f2c500;--g:#1c8a3c;--b:#1b4fbf;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:#e9e9e9;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;color:var(--k)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background:#222}}
+#stage{width:800px;height:480px;flex:none;transform-origin:center}
+#screen{width:800px;height:480px;background:var(--w);border:4px solid var(--k);display:grid;grid-template-rows:38px 1fr 26px;overflow:hidden}
+header{background:var(--k);color:var(--w);display:flex;align-items:center;padding:0 12px;gap:12px}
+header b{font:900 20px "Arial Black",Arial,sans-serif}
+header span{font-weight:700;font-size:14px;margin-left:auto}
+#grid{display:grid;grid-template-columns:62px 54px repeat(4,1fr);grid-template-rows:28px repeat(6,1fr) 40px}
+.c{border-right:2px solid var(--k);border-bottom:2px solid var(--k);padding:3px 6px;font-weight:700;font-size:13px;line-height:1.1;display:flex;align-items:center;overflow:hidden}
+.dh{justify-content:center;background:var(--k);color:var(--w);font:900 15px "Arial Black",Arial,sans-serif;border-color:var(--w)}
+.dh.today{background:var(--y);color:var(--k);border-color:var(--k)}
+.kid{font:900 14px "Arial Black",Arial,sans-serif;background:var(--w);justify-content:center;text-align:center;border-right:4px solid var(--k)}
+.it{font-size:11px;justify-content:center;text-align:center;color:var(--k)}
+.drv{border-left-width:9px;border-left-style:solid}
+.none{color:var(--k);font-weight:400}
+.off{background:var(--k);color:var(--w);justify-content:center;font-weight:900}
+.flag{background:var(--y)}
+.din{background:var(--w);font:900 15px "Arial Black",Arial,sans-serif}
+.dinl{font:900 13px "Arial Black",Arial,sans-serif;justify-content:center;grid-column:1/3;background:var(--g);color:var(--w)}
+.today-c{outline:3px solid var(--k);outline-offset:-3px}
+footer{background:var(--k);color:var(--w);display:flex;align-items:center;gap:14px;padding:0 10px;font:700 12px Arial,sans-serif}
+.sw{width:12px;height:12px;border:2px solid var(--w);display:inline-block;margin-right:4px;vertical-align:-2px}
+</style>
+</head>
+<body>
+<div id="stage"><div id="screen">
+  <header><b>Salzberg Weekly Plan</b><span id="dt"></span></header>
+  <div id="grid"></div>
+  <footer id="legend"></footer>
+</div></div>
+<script>
+/* ===== EDIT THIS BLOCK (mirrors the Google Sheet) ===== */
+const DAYS=["Tue","Wed","Thu","Fri"];
+const DAYNUM=[2,3,4,5];              // JS weekday numbers for the columns above
+const ROWS=[
+ ["Meitav","Drop-off",["Ori","Sapir","Ori","Sapir"]],
+ ["Meitav","Pickup",  ["Mark Cohen","BUS (Navit)","Laila?",""]],
+ ["Meitav","After",   ["—","Music 5:30-6. Navit takes, Jason Ossey brings home","Soccer, Navit 5:15 pm","—"]],
+ ["Kol","Drop-off",   ["NO SCHOOL","Bus (Navit takes)","Ori","Bus (Navit takes)"]],
+ ["Kol","Pickup",     ["—","CLUE rehearsal until 5","Navit 4 pm. Whole Weber carpool","Bachar, pick up at Starbucks ~2:30"]],
+ ["Kol","After",      ["","Dance 6 pm. Navit brings, Pas brings home","Guitar 6 pm. Ori drives, Navit picks up","Math tutoring"]],
+ ["Havi","After",     ["Boxing. Ori brings home from Mazes","Music 5:30-6","Boxing. Salzberg pick up","—"]]
+];
+const DINNER=["Schnitzel Night","Grill","Sushi","Sukkot"];
+/* Driver colors (legend). Edit to match your sheet. */
+const DRIVERS={Ori:"var(--b)",Navit:"var(--r)",Sapir:"var(--g)",Arielle:"var(--y)",Robkins:"var(--k)"};
+/* ====================================================== */
+
+const now=new Date(),t=now.getDay(),ti=DAYNUM.indexOf(t);
+document.getElementById("dt").textContent=now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+let h='<div class="c dh" style="grid-column:1/3"></div>'+DAYS.map((d,i)=>`<div class="c dh ${i===ti?"today":""}">${d}</div>`).join("");
+// kid label cells span their rows
+const spans={};ROWS.forEach((r,i)=>{(spans[r[0]]=spans[r[0]]||{start:i+2,n:0}).n++});
+Object.entries(spans).forEach(([k,s])=>{h+=`<div class="c kid" style="grid-row:${s.start}/span ${s.n};grid-column:1">${k}</div>`});
+ROWS.forEach((r,ri)=>{
+  h+=`<div class="c it" style="grid-row:${ri+2};grid-column:2">${r[1]}</div>`;
+  r[2].forEach((v,ci)=>{
+    const name=Object.keys(DRIVERS).find(n=>v.includes(n));
+    const off=/NO SCHOOL/i.test(v), flag=/\?|NEEDS/i.test(v);
+    let cls="c"+(off?" off":"")+(flag?" flag":"")+(name&&!off?" drv":"")+(!v||v==="—"?" none":"");
+    const st=`grid-row:${ri+2};grid-column:${ci+3};`+(name&&!off?`border-left-color:${DRIVERS[name]}`:"");
+    h+=`<div class="${cls}" style="${st}">${esc(v||"—")}</div>`;
+  });
+});
+h+='<div class="c dinl" style="grid-row:8">Dinner</div>'+DINNER.map((d,i)=>`<div class="c din" style="grid-row:8;grid-column:${i+3};${i===ti?"background:var(--y)":""}">${esc(d)}</div>`).join("");
+document.getElementById("grid").innerHTML=h;
+document.getElementById("legend").innerHTML='Driver color: '+Object.entries(DRIVERS).map(([n,c])=>`<span><i class="sw" style="background:${c}"></i>${n}</span>`).join("");
+function fit(){const s=Math.min(innerWidth/820,innerHeight/500,1.6);document.getElementById("stage").style.transform="scale("+s+")"}
+addEventListener("resize",fit);fit();
+</script>
+</body>
+</html>

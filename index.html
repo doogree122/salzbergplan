@@ -45,14 +45,15 @@ svg{display:block;flex:none}
 .dinner b{font:700 21px/1 Fredoka,Arial,sans-serif}
 .dinner .night{margin-left:auto;text-align:right;font:800 12px/1.15 Nunito,Arial,sans-serif;max-width:46%}
 
-/* other days */
-.right{display:flex;flex-direction:column;gap:6px;min-height:0}
-.tile{flex:1;border:3px solid var(--k);border-radius:14px;padding:5px 9px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:0;overflow:hidden}
-.tile .d{display:flex;align-items:baseline;gap:6px;font:700 18px/1 Fredoka,Arial,sans-serif}
-.tile .d span{font:800 12px Nunito,Arial,sans-serif}
-.chip{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;background:var(--g);color:var(--w);border-radius:20px;padding:2px 9px 2px 4px;font:800 12.5px Nunito,Arial,sans-serif;max-width:100%;white-space:nowrap;overflow:hidden}
-.acts{display:flex;flex-wrap:wrap;gap:3px 10px;font:800 12px Nunito,Arial,sans-serif}
-.act{display:flex;align-items:center;gap:3px;white-space:nowrap}
+/* family photo (right side) — photo.png is made by photo.py at 262x364 */
+.right{position:relative;border:3px solid var(--k);border-radius:14px;overflow:hidden;background:var(--b);min-height:0}
+.right img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;image-rendering:pixelated}
+.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--w);font:700 20px/1.1 Fredoka,Arial,sans-serif;text-align:center}
+.ph[hidden]{display:none}
+.fyi{position:absolute;left:6px;right:6px;bottom:6px;background:var(--w);border:3px solid var(--k);border-radius:12px;padding:6px 8px 7px;display:flex;flex-direction:column;gap:3px}
+.fyi .tag{align-self:flex-start;background:var(--r);color:var(--w);border-radius:6px;padding:1px 7px;font:700 13px/1.2 Fredoka,Arial,sans-serif;letter-spacing:.5px}
+.fyi .n{display:flex;gap:6px;align-items:flex-start;font:800 12.5px/1.15 Nunito,Arial,sans-serif}
+.fyi .n i{width:8px;height:8px;border-radius:50%;background:var(--b);border:1.5px solid var(--k);flex:none;margin-top:3px}
 .dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--k);color:#fff;font:700 9px/11px Fredoka,Arial,sans-serif;text-align:center;flex:none}
 
 footer{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 4px;font:800 12px Nunito,Arial,sans-serif;white-space:nowrap;overflow:hidden}
@@ -75,6 +76,10 @@ const PEOPLE = {Ori:"blue", Navit:"green", Sapir:"red", Arielle:"yellow", Robkin
 const HELPERS = ["Mark","Bachar","Laila","Pas","Jason","Nechama","Isaiah","Weber","Salzberg"];
 // Kid avatar colors, in sheet order
 const KID_COLORS = ["blue","red","green","black"];
+// Family photo for the right side (made every hour by photo.py from the shared album)
+const PHOTO = "photo.png";
+// Most FYI notes that fit over the photo
+const MAX_FYI = 6;
 /* ============================================ */
 
 const C={blue:"#1b4fbf",red:"#d0201a",green:"#1c8a3c",yellow:"#f2c500",black:"#000",white:"#fff"};
@@ -156,11 +161,32 @@ function parseSheet(wb){
       for(let rr=r+1;rr<=r+3;rr++) for(let c=0;c<=R.e.c;c++){const t=txt(rr,c),col=bg(rr,c);if(t&&col)legend.push({name:t,col})}
       break;
     }
-    const D={tab:name,days:days.map(d=>d.n),rows:[],dinner:days.map(()=>""),night:days.map(()=>""),legend};
+    // FYI: a cell that says "FYI"; notes are to its right and in the rows below, up to the first blank row.
+    // A note under a day column shows only on that day; anywhere else it always shows.
+    const fyi=[],fyiRows=new Set();
+    find: for(let r=0;r<=R.e.r;r++) for(let c=0;c<=R.e.c;c++){
+      if(!/^fyi\b/i.test(txt(r,c))) continue;
+      const rest=txt(r,c).replace(/^fyi\s*[:\-–]?\s*/i,"");
+      if(rest) fyi.push({t:rest,day:null});
+      fyiRows.add(r);
+      for(let rr=r;rr<=R.e.r;rr++){
+        if(rr>r&&hidR.has(rr)){fyiRows.add(rr);continue}
+        let any=false;
+        for(let cc=(rr===r?c+1:c);cc<=R.e.c;cc++){
+          if(hidC.has(cc)) continue;
+          const t=txt(rr,cc); if(!t) continue; any=true;
+          const d=days.find(d=>d.c===cc); fyi.push({t,day:d?d.n:null});
+        }
+        if(rr>r){ if(!any) break; fyiRows.add(rr); }
+      }
+      break find;
+    }
+    const D={tab:name,days:days.map(d=>d.n),rows:[],dinner:days.map(()=>""),night:days.map(()=>""),legend,fyi};
     let kid="";
     for(let r=hr+1;r<=R.e.r;r++){
       const a=txt(r,0);
       if(/^legend/i.test(a)) break;
+      if(fyiRows.has(r)) continue;
       if(a) kid=a;
       if(hidR.has(r)) continue;
       const vals=days.map(d=>({t:txt(r,d.c),bg:bg(r,d.c)}));
@@ -226,13 +252,10 @@ function render(D){
   const din=D.dinner[f]||"", night=D.night[f]||"";
   const dinnerHTML=`<div class="dinner"><span style="background:${W};border-radius:50%;padding:3px;border:2px solid ${K}">${icon(pick(FOOD,din,"plate"),32)}</span><div><small>Family dinner</small><b>${esc(din||"—")}</b></div>${night?`<div class="night">${icon("heart",16).replace("<svg",'<svg style="display:inline-block;vertical-align:-3px"')} ${esc(D.nightLabel||"Night")}<br>${esc(night)}</div>`:""}</div>`;
 
-  const tiles=D.days.map((n,i)=>{ if(i===f) return "";
-    const acts=kids.map(k=>{const r=D.rows.find(r=>r.kid===k&&/after/i.test(r.item)&&!empty(r.vals[i].t)&&!(r.vals[i].bg&&r.vals[i].bg.every(x=>x<40)));
-      if(!r) return "";const t=r.vals[i].t;
-      return `<span class="act"><span class="dot" style="background:${kc(k)}">${esc(k[0])}</span>${icon(pick(ACT,t,"star"),17)}${esc(firstWord(t))}</span>`}).join("");
-    const d=D.dinner[i];
-    return `<div class="tile"><div class="d">${FULL[n]}<span>${dateOf(i).getDate()}</span></div>${d?`<span class="chip"><span style="background:#fff;border-radius:50%;display:flex">${icon(pick(FOOD,d,"plate"),20)}</span>${esc(d)}</span>`:""}<div class="acts">${acts||`<span class="act">${icon("sun",17)}Free afternoon</span>`}</div></div>`;
-  }).join("");
+  const notes=D.fyi.filter(n=>n.day==null||n.day===D.days[f]).slice(0,MAX_FYI);
+  const fyiHTML=notes.length?`<div class="fyi"><span class="tag">FYI</span>${notes.map(n=>`<div class="n"><i></i><span>${esc(n.t)}</span></div>`).join("")}</div>`:"";
+  const photoHTML=`<img id="photo" alt="" src="${PHOTO}?t=${Date.now()}" onerror="this.remove();document.getElementById('ph').hidden=false">
+     <div class="ph" id="ph" hidden>${icon("house",64)}<div>Salzberg<br>Family</div>${icon("heart",34)}</div>${fyiHTML}`;
 
   const seen=new Set();
   const legend=D.legend.map(L=>{const p=Object.keys(PEOPLE).find(n=>new RegExp("\\b"+n+"\\b","i").test(L.name));return p}).filter(p=>p&&!seen.has(p)&&seen.add(p));
@@ -242,7 +265,7 @@ function render(D){
    <div class="top">${icon("sun",44)}<div class="day">${FULL[D.days[f]]}</div><div class="date">${label} · ${dd.toLocaleDateString("en-US",{month:"long",day:"numeric"})}</div>
      <div class="ttl">Salzberg<br>Family Plan ${icon("house",38)}</div></div>
    <div class="left">${kidHTML}${dinnerHTML}</div>
-   <div class="right">${tiles}</div>
+   <div class="right">${photoHTML}</div>
    <footer>${icon("car",18)}Who's driving:${lgHTML}<span style="margin-left:auto;display:flex;align-items:center;gap:4px">${icon("star",14)}${esc(D.tab)}</span></footer>`;
 }
 
@@ -258,6 +281,8 @@ async function load(){
     render(parseSheet(wb));
   }catch(e){console.error(e);showError(e.message||String(e))}
   try{await document.fonts.ready}catch(e){}
+  const img=document.getElementById("photo");
+  if(img&&!img.complete) await new Promise(r=>{img.onload=r;img.addEventListener("error",r);setTimeout(r,8000)});
   document.body.dataset.ready="1";
 }
 function fit(){const s=Math.min(innerWidth/800,innerHeight/480);document.getElementById("stage").style.transform="scale("+s+")"}

@@ -252,7 +252,9 @@ function render(D){
   const kc=k=>C[KID_COLORS[kids.indexOf(k)%KID_COLORS.length]];
 
   const kidHTML=kids.map(k=>{
-    const rs=D.rows.filter(r=>r.kid===k);
+    // only the rows that have something in them today (blank, "—" and black "not applicable" cells are left out)
+    const rs=D.rows.filter(r=>r.kid===k&&!empty(r.vals[f].t)&&!(r.vals[f].bg&&r.vals[f].bg.every(x=>x<40)));
+    if(!rs.length) return `<div class="kid" style="flex:1.5"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows"><div class="row">${icon("none",28)}<div class="tx"><span class="val none">Nothing planned</span></div></div></div></div>`;
     return `<div class="kid" style="flex:${rs.length+(rs.length===1?.5:0)}"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows">`+
       rs.map(r=>{
         const v=r.vals[f], w=who(v,D), off=/no school/i.test(v.t), na=w&&w.na, none=empty(v.t)||na;

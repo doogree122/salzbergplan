@@ -10,7 +10,7 @@ The page reads the family Google Sheet, **Salzberg Weekly Family Plan**, every t
 
 - **Tab:** the first tab that has a `Child` header row. Put the current week's tab first, leftmost.
 - **Days:** the day columns (`Monday` … `Friday`). Hidden columns and hidden rows are skipped.
-- **Kids:** each kid's rows are the ones under their name in column A. The `Item` text (To school, Home + time, Afterschool) picks the little picture.
+- **Kids:** each kid's rows are the ones under their name in column A. Rows that are blank (or `—`, or black) for the day are left off that kid's card; a kid with nothing that day shows "Nothing planned". The `Item` text (To school, Home + time, Afterschool) picks the little picture.
 - **Drivers:** the cell **color** is matched to the sheet's **Legend** row. If a cell's color isn't in the legend, the page looks for a name in the text instead (for example, "Navit"). A black cell means "not applicable". The "Needs to be figured out" color, or a `?` in the text, makes the row yellow. `NO SCHOOL` shows white text on black.
 - **Family dinner** and the **Ori/Navit Night Activity** row appear in the green dinner bar.
 - **Pictures:** the activity picture comes from keywords: soccer, music, guitar, dance, boxing, math, tutoring, drama/rehearsal, CLUE, swim, basketball. The dinner picture also comes from keywords: schnitzel, grill, sushi, salmon/fish, pizza, pasta, tacos, burger, Sukkot, Shabbat/holiday. Anything else gets a star or a plate.

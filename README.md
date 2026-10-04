@@ -18,6 +18,7 @@ The page reads the family Google Sheet, **Salzberg Weekly Family Plan**, every t
 - **FYI:** type `FYI` in any cell of the sheet. Notes to its right and in the rows below it, up to the first blank row, show in a box over the bottom of the photo. Notes on the FYI row always show. In the rows below, a note under a day column shows only on that day. Up to six fit.
 - **Shabbat screen:** on Friday from 4 pm and all of Saturday, the whole display is a family photo with "שבת שלום" and the candle-lighting and Shabbat-ends times for Atlanta from hebcal.com. `SHABBAT_MODE` and `SHABBAT_START_HOUR` are at the top of the script in index.html. Add `?shabbat=1` to the page address to see it any day, or run the workflow with "shabbat_preview" ticked.
 - **Refreshing:** each run of the GitHub job waits until the next quarter hour and starts the next one, so the display and photo update every 15 minutes. To stop it, disable the "Render display image" workflow under Actions.
+- **Weather:** the picture next to the day (sun, partly cloudy, cloud, fog, rain, storm or snow) and the high/low come from the free Open-Meteo forecast for Atlanta, for the day being shown. If it can't be reached, the plain sun shows.
 - **Timing:** the page uses Eastern time. From 7 pm on it shows tomorrow, and on weekends it shows the next school day.
 
 Settings are at the top of the script in `index.html`: `PEOPLE` (the badge color for each driver), `HELPERS` (other grown-ups who get a white badge), `KID_COLORS`, `TAB`, and `ROLLOVER_HOUR`.

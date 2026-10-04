@@ -15,7 +15,7 @@
 html,body{height:100%;overflow:hidden}
 body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Nunito,Arial,sans-serif;color:var(--k)}
 #stage{width:800px;height:480px;flex:none;transform-origin:center}
-#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 320px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
+#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
 .fred{font-family:Fredoka,Nunito,Arial,sans-serif}
 svg{display:block;flex:none}
 
@@ -47,7 +47,7 @@ svg{display:block;flex:none}
 .dinner b{font:700 21px/1 Fredoka,Arial,sans-serif}
 .dinner .night{margin-left:auto;text-align:right;font:800 12px/1.15 Nunito,Arial,sans-serif;max-width:46%}
 
-/* family photo (right side) — photo.png is made by photo.py at 314x364 */
+/* family photo (right side) — photo.png is made by photo.py at 385x364 (half the screen) */
 .right{position:relative;border:3px solid var(--k);border-radius:14px;overflow:hidden;background:var(--b);min-height:0}
 .right img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;image-rendering:pixelated}
 .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--w);font:700 20px/1.1 Fredoka,Arial,sans-serif;text-align:center}
@@ -281,14 +281,18 @@ function render(D){
   const kidHTML=kids.map(k=>{
     // only the rows that have something in them today (blank, "—" and black "not applicable" cells are left out)
     const rs=D.rows.filter(r=>r.kid===k&&!empty(r.vals[f].t)&&!(r.vals[f].bg&&r.vals[f].bg.every(x=>x<40)));
-    if(!rs.length) return `<div class="kid" style="flex:1.5"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows"><div class="row">${icon("none",28)}<div class="tx"><span class="val none">Nothing planned</span></div></div></div></div>`;
-    return `<div class="kid" style="flex:${rs.length+(rs.length===1?.5:0)}"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows">`+
+    if(!rs.length) return `<div class="kid" style="flex:2"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows"><div class="row">${icon("none",28)}<div class="tx"><span class="val none">Nothing planned</span></div></div></div></div>`;
+    const kindOf=r=>/after|activ/i.test(r.item)?"after":/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
+    // room each row needs: a labeled row and text long enough to wrap get more height
+    const weight=r=>1+(kindOf(r)!=="after"?.3:0)+(r.vals[f].t.length>30?.6:0);
+    const tot=rs.reduce((a,r)=>a+weight(r),0);
+    return `<div class="kid" style="flex:${tot+(rs.length===1?.5:0)}"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows">`+
       rs.map(r=>{
         const v=r.vals[f], w=who(v,D), off=/no school/i.test(v.t), na=w&&w.na, none=empty(v.t)||na;
         const fl=!off&&((w&&w.flag)||/\?|needs/i.test(v.t));
-        const kind=/after|activ/i.test(r.item)?"after":/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
+        const kind=kindOf(r);
         const ic=off?"sun":none?"none":kind==="after"?pick(ACT,v.t,"star"):kind;
-        return `<div class="row ${off?"off":""} ${fl?"flag":""}">${off?S(ICON.sun,28,W):icon(ic,28)}<div class="tx"><span class="lab">${esc(r.item)}</span><span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span></div>${off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W}">?</span>`:badge(w)}</div>`;
+        return `<div class="row ${off?"off":""} ${fl?"flag":""}" style="flex:${weight(r)}">${off?S(ICON.sun,28,W):icon(ic,28)}<div class="tx">${kind==="school"||kind==="home"?`<span class="lab">${esc(r.item)}</span>`:""}<span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span></div>${off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W}">?</span>`:badge(w)}</div>`;
       }).join("")+`</div></div>`;
   }).join("");
 

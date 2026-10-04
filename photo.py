@@ -1,5 +1,5 @@
 # Picks a photo from the shared Google Photos album and makes photo.png for the display:
-# cropped around the faces in it (OpenCV YuNet face finder), sized for the photo panel (314x364), and dithered to the six E Ink Spectra 6 colors.
+# cropped around the faces in it (OpenCV YuNet face finder), sized for the photo panel (385x364, half the screen), and dithered to the six E Ink Spectra 6 colors.
 # A different photo is chosen every 15 minutes. If anything fails, no photo.png is written and
 # the page shows a placeholder instead, so the plan itself always renders.
 # If no faces are found (or the face model is missing), it falls back to a crop that favors the top.
@@ -15,7 +15,7 @@ FACE_MODEL = "face_detection_yunet_2023mar.onnx"   # downloaded by the GitHub jo
 ALBUM = os.environ.get("ALBUM_URL") or (
     "https://photos.google.com/share/AF1QipMp2zhF1zyFHB2Lj5cv5UZY24D3LplQbN8BrczfrZw7p13bRqsmQ66JyAZAa3y2XQ"
     "?key=UG9hY1lYcGI4aDFxTEc3Q3FWOURRaWlFaEwxcjRR")
-SIZE = (314, 364)
+SIZE = (385, 364)
 FULL = (800, 480)      # the whole screen, for the Shabbat photo
 SHABBAT_START_HOUR = 16
 CHANGE_EVERY_MINUTES = 15

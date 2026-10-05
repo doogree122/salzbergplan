@@ -18,7 +18,6 @@ ALBUM = os.environ.get("ALBUM_URL") or (
 SIZE = (294, 364)
 FULL = (800, 480)      # the whole screen, for the Shabbat photo
 SHABBAT_START_HOUR = 16
-FACE_HEIGHT = 0.28     # where faces sit in the crop: 0 = top edge, 0.5 = middle
 CHANGE_EVERY_MINUTES = 15
 PALETTE = [(0,0,0),(255,255,255),(208,32,26),(242,197,0),(28,138,60),(27,79,191)]
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"}
@@ -69,15 +68,11 @@ def crop_box(w, h, faces, size=SIZE):
     if not faces:
         left, top = (w - cw) / 2, (h - ch) * 0.2           # favor the top, where faces usually are
         return (left, top, left + cw, top + ch)
-    # everyone's heads plus some room: hair above, shoulders below, a little on each side
-    fx0 = min(f[0] - f[2] * 0.45 for f in faces); fx1 = max(f[0] + f[2] * 1.45 for f in faces)
-    fy0 = min(f[1] - f[3] * 0.55 for f in faces); fy1 = max(f[1] + f[3] * 1.9 for f in faces)
-    face_mid = sum(f[1] + f[3] / 2 for f in faces) / len(faces)
-    # zoom in only as far as every face (plus a little room) still fits, and never past 40% of the full frame
-    need = min(cw, max(fx1 - fx0, (fy1 - fy0) * aspect, cw * 0.4))
-    # zooming in less helps faces that sit low in the photo end up high in the crop; never zoom past "need" for it
-    high = (h - face_mid) / (1 - FACE_HEIGHT) * aspect
-    cw = max(need, min(cw, high))
+    # the people: every face plus room for hair above, shoulders below and a little on each side
+    fx0 = min(f[0] - f[2] * 0.5 for f in faces); fx1 = max(f[0] + f[2] * 1.5 for f in faces)
+    fy0 = min(f[1] - f[3] * 0.6 for f in faces); fy1 = max(f[1] + f[3] * 2.0 for f in faces)
+    # zoom in as far as that box still fits (faces as big as possible), but not past 40% of the full frame
+    cw = min(cw, max(fx1 - fx0, (fy1 - fy0) * aspect, cw * 0.4))
     ch = cw / aspect
     if fx1 - fx0 <= cw:
         cx = (fx0 + fx1) / 2
@@ -90,7 +85,7 @@ def crop_box(w, h, faces, size=SIZE):
         best = max(lefts, key=lambda l: (score(l), -abs(l + cw / 2 - (fx0 + fx1) / 2)))
         cx = best + cw / 2
     left = max(0.0, min(w - cw, cx - cw / 2))
-    top = max(0.0, min(h - ch, face_mid - ch * FACE_HEIGHT))   # faces high up in the frame
+    top = max(0.0, min(h - ch, (fy0 + fy1) / 2 - ch / 2))      # the people centered in the frame
     return (left, top, left + cw, top + ch)
 
 def prepare(img, size=SIZE):

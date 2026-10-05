@@ -15,7 +15,7 @@
 html,body{height:100%;overflow:hidden}
 body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Nunito,Arial,sans-serif;color:var(--k)}
 #stage{width:800px;height:480px;flex:none;transform-origin:center}
-#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 262px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
+#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 300px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
 .fred{font-family:Fredoka,Nunito,Arial,sans-serif}
 svg{display:block;flex:none}
 
@@ -49,7 +49,7 @@ svg{display:block;flex:none}
 .dinner b{font:700 21px/1 Fredoka,Arial,sans-serif}
 .dinner .night{margin-left:auto;display:flex;align-items:center;gap:6px;text-align:right;font:800 15px/1.1 Nunito,Arial,sans-serif;max-width:50%}
 
-/* family photo (right side) — photo.png is made by photo.py at 256x364 (a third of the screen) */
+/* family photo (right side) — photo.png is made by photo.py at 294x364 (a bit more than a third of the screen) */
 .right{position:relative;border:3px solid var(--k);border-radius:14px;overflow:hidden;background:var(--b);min-height:0}
 .right img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;image-rendering:pixelated}
 .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--w);font:700 20px/1.1 Fredoka,Arial,sans-serif;text-align:center}
@@ -88,6 +88,8 @@ const PEOPLE = {Ori:"blue", Navit:"green", Sapir:"red", Arielle:"yellow", Robkin
 const HELPERS = ["Mark","Bachar","Laila","Pas","Jason","Nechama","Isaiah","Weber","Salzberg"];
 // Kid avatar colors, in sheet order
 const KID_COLORS = ["blue","red","green","black"];
+// Order of the kid columns, left to right (kids not listed go after these, in sheet order)
+const KID_ORDER = ["Kol","Havi","Meitav"];
 // Family photo for the right side (made every hour by photo.py from the shared album)
 const PHOTO = "photo.png";
 // Most FYI notes that fit over the photo
@@ -116,6 +118,7 @@ const ICON={
  star:`<path d="m16 3 3.8 8 8.7 1-6.4 6 1.7 8.6L16 22.4 8.2 26.6 9.9 18 3.5 12l8.7-1Z" fill="${C.yellow}"/>`,
  soccer:`<circle cx="16" cy="16" r="12" fill="${W}"/><path d="m16 11 4.5 3.2-1.7 5.3h-5.6l-1.7-5.3Z" fill="${K}"/><path d="M16 11V4.5M20.5 14.2l6-2M18.8 19.5l3.6 5.4M13.2 19.5l-3.6 5.4M11.5 14.2l-6-2"/>`,
  music:`<path d="M11 24V8l14-3v15" /><path d="M11 12l14-3"/><ellipse cx="8" cy="24" rx="3.5" ry="3" fill="${C.blue}"/><ellipse cx="22" cy="20.5" rx="3.5" ry="3" fill="${C.blue}"/>`,
+ drum:`<ellipse cx="16" cy="12" rx="11" ry="4" fill="${W}"/><path d="M5 12v11c0 2.2 4.9 4 11 4s11-1.8 11-4V12" fill="${C.red}"/><ellipse cx="16" cy="12" rx="11" ry="4" fill="${W}"/><path d="M5 17l5.5 9M27 17l-5.5 9M10.5 15.8 16 26.5l5.5-10.7" stroke="${C.yellow}" stroke-width="2"/><path d="M5 12v11c0 2.2 4.9 4 11 4s11-1.8 11-4V12" fill="none"/><path d="M9 2l6 8M25 2l-6 8" stroke-width="2.6"/><circle cx="9" cy="2.5" r="1.6" fill="${K}"/><circle cx="25" cy="2.5" r="1.6" fill="${K}"/>`,
  guitar:`<path d="M19 13l8-8" stroke-width="3"/><path d="M25 3l4 4" stroke-width="3"/><path d="M17.5 11.5c-2-2-5-1-5.5 1.5-.3 1.4-1.4 2.2-2.8 2.3C5.6 15.6 3.5 19 5 22.5c.9 2 2.6 3.6 4.5 4.5 3.5 1.5 6.9-.6 7.2-4.2.1-1.4.9-2.5 2.3-2.8 2.5-.5 3.5-3.5 1.5-5.5Z" fill="${C.yellow}"/><circle cx="13" cy="19" r="2.4" fill="${K}"/>`,
  dance:`<path d="M6 22c0-3 3-4 6-4l6-7c2-2 5-1 6 1 1.5 3-1 6-4 8l-5 4c-2 1.5-4 2-6 2-2 0-3-2-3-4Z" fill="${C.red}"/><path d="M14 17c3 0 6-2 8-4M10 5l1.5 3M15 3v3.5M20 4.5l-1.5 3"/>`,
  boxing:`<path d="M9 18V11a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v4a6 6 0 0 1-6 6h-1" fill="${C.red}"/><path d="M8 13h4a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-1a3 3 0 0 1 3-3Z" fill="${C.red}"/><rect x="9" y="21" width="13" height="7" rx="1.5" fill="${W}"/><path d="M12 24.5h7"/>`,
@@ -170,7 +173,7 @@ async function loadWeather(){
 }
 const FACE=(col,sz=34)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="${W}" stroke="${K}" stroke-width="2.2"/><circle cx="11.5" cy="14" r="1.9" fill="${K}"/><circle cx="20.5" cy="14" r="1.9" fill="${K}"/><path d="M11 19.5c2.8 3 7.2 3 10 0" stroke="${K}" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="8.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><circle cx="23.5" cy="18.5" r="2" fill="${col===C.red?C.yellow:C.red}"/><path d="M5 11c2-6 7-8 11-8s9 2 11 8c-3-2-7-3-11-3s-8 1-11 3Z" fill="${K}" stroke="${K}" stroke-width="2"/></svg>`;
 
-const ACT=[[/soccer|football/i,"soccer"],[/guitar/i,"guitar"],[/music|piano|violin|choir|sing|band/i,"music"],[/danc|ballet/i,"dance"],[/box/i,"boxing"],[/math/i,"math"],[/clue/i,"clue"],[/drama|rehears|theat|play\b/i,"drama"],[/tutor|homework|read|hebrew/i,"book"],[/swim/i,"swim"],[/basket/i,"bball"],[/no school/i,"sun"],[/\bbus\b/i,"bus"]];
+const ACT=[[/drum/i,"drum"],[/soccer|football/i,"soccer"],[/guitar/i,"guitar"],[/music|piano|violin|choir|sing|band/i,"music"],[/danc|ballet/i,"dance"],[/box/i,"boxing"],[/math/i,"math"],[/clue/i,"clue"],[/drama|rehears|theat|play\b/i,"drama"],[/tutor|homework|read|hebrew/i,"book"],[/swim/i,"swim"],[/basket/i,"bball"],[/no school/i,"sun"],[/\bbus\b/i,"bus"]];
 const FOOD=[[/schnitzel|cutlet|chicken|nugget/i,"schnitzel"],[/grill|bbq|barbecue|steak/i,"grill"],[/sushi/i,"sushi"],[/salmon|fish/i,"fish"],[/pizza/i,"pizza"],[/pasta|spaghetti|noodle|mac/i,"pasta"],[/taco|burrito|mexican/i,"taco"],[/burger/i,"burger"],[/sukk|sukkah/i,"sukkah"],[/shabbat|atzeret|simchat|chag|yom tov|holiday|rosh|seder/i,"candles"],[/out|restaurant|takeout/i,"house"]];
 const pick=(list,t,def)=>{for(const [re,n] of list) if(re.test(t)) return n; return def};
 const firstWord=v=>{const w=v.replace(/^[\d:.\s-]+(am|pm)?\s*/i,"").split(/[.,(\n]/)[0].trim().split(/\s+/);return w.slice(0,w[0]&&w[0].length<4?2:1).join(" ")};
@@ -279,8 +282,10 @@ function render(D){
   const dateOf=i=>{const x=new Date(dd);x.setDate(x.getDate()+D.days[i]-D.days[f]);return x}; // same week as the focus day
   const label=gap===0?"Today":gap===1?"Tomorrow":"Next school day";
   const empty=t=>!t||/^[—–-]+$/.test(t);
-  const kids=[...new Set(D.rows.map(r=>r.kid))];
-  const kc=k=>C[KID_COLORS[kids.indexOf(k)%KID_COLORS.length]];
+  const sheetKids=[...new Set(D.rows.map(r=>r.kid))];
+  const kc=k=>C[KID_COLORS[sheetKids.indexOf(k)%KID_COLORS.length]];   // each kid keeps their color
+  const rank=k=>{const i=KID_ORDER.findIndex(n=>n.toLowerCase()===k.toLowerCase());return i<0?99:i};
+  const kids=[...sheetKids].sort((a,b)=>rank(a)-rank(b)||sheetKids.indexOf(a)-sheetKids.indexOf(b));
 
   const kindOf=r=>/after|activ/i.test(r.item)?"after":/school|transport|drop|morning/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
   const ORDER={school:0,home:1,after:2};   // morning drive at the top, then back home, then everything else

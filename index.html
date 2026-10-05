@@ -15,7 +15,7 @@
 html,body{height:100%;overflow:hidden}
 body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Nunito,Arial,sans-serif;color:var(--k)}
 #stage{width:800px;height:480px;flex:none;transform-origin:center}
-#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
+#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 262px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
 .fred{font-family:Fredoka,Nunito,Arial,sans-serif}
 svg{display:block;flex:none}
 
@@ -28,16 +28,18 @@ svg{display:block;flex:none}
 .top .ttl{margin-left:auto;display:flex;align-items:center;gap:8px;font:700 17px/1.05 Fredoka,Arial,sans-serif;text-align:right}
 
 /* kids */
-.left{display:flex;flex-direction:column;gap:6px;min-height:0}
-.kid{display:flex;border:3px solid var(--k);border-radius:14px;overflow:hidden;min-height:0}
-.av{width:40px;flex:none;display:flex;align-items:center;justify-content:center;border-right:3px solid var(--k);color:var(--w);font:700 17px Fredoka,Arial,sans-serif}
-.av span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap}
-.rows{flex:1;display:flex;flex-direction:column;min-width:0}
-.row{flex:1;display:flex;align-items:center;gap:8px;padding:2px 8px 2px 6px;border-bottom:2px dashed var(--k);min-height:0}
+.left{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0}
+.kids{flex:1;display:flex;gap:6px;min-height:0}
+.kid{flex:1;display:flex;flex-direction:column;border:3px solid var(--k);border-radius:14px;overflow:hidden;min-width:0}
+.av{flex:none;display:flex;align-items:center;justify-content:center;height:28px;border-bottom:3px solid var(--k);color:var(--w);font:700 18px/1 Fredoka,Arial,sans-serif}
+.rows{flex:1;display:flex;flex-direction:column;min-height:0}
+.row{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:4px 7px;border-bottom:2px dashed var(--k);min-height:0;overflow:hidden}
 .row:last-child{border-bottom:0}
+.rh{display:flex;align-items:center;gap:6px;min-width:0}
+.rh .badge{margin-left:auto}
 .tx{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
-.lab{font:900 9.5px/1 Nunito,Arial,sans-serif;letter-spacing:.6px;text-transform:uppercase}
-.val{font:800 14.5px/1.08 Nunito,Arial,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lab{flex:1;font:900 10px/1.05 Nunito,Arial,sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.val{font:800 14px/1.1 Nunito,Arial,sans-serif;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .val.none{font-weight:700}
 .badge{width:28px;height:28px;border-radius:50%;border:2.5px solid var(--k);display:flex;align-items:center;justify-content:center;font:700 14px Fredoka,Arial,sans-serif;flex:none}
 .row.off{background:var(--k);color:var(--w)}
@@ -45,9 +47,9 @@ svg{display:block;flex:none}
 .dinner{background:var(--g);color:var(--w);border:3px solid var(--k);border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 10px;height:50px;flex:none}
 .dinner small{font:900 10px Nunito,Arial,sans-serif;letter-spacing:.8px;text-transform:uppercase;display:block}
 .dinner b{font:700 21px/1 Fredoka,Arial,sans-serif}
-.dinner .night{margin-left:auto;text-align:right;font:800 12px/1.15 Nunito,Arial,sans-serif;max-width:46%}
+.dinner .night{margin-left:auto;display:flex;align-items:center;gap:6px;text-align:right;font:800 15px/1.1 Nunito,Arial,sans-serif;max-width:50%}
 
-/* family photo (right side) — photo.png is made by photo.py at 385x364 (half the screen) */
+/* family photo (right side) — photo.png is made by photo.py at 256x364 (a third of the screen) */
 .right{position:relative;border:3px solid var(--k);border-radius:14px;overflow:hidden;background:var(--b);min-height:0}
 .right img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;image-rendering:pixelated}
 .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--w);font:700 20px/1.1 Fredoka,Arial,sans-serif;text-align:center}
@@ -252,6 +254,7 @@ function who(v,D){
       if(/fill/i.test(best.name)) best=null; else {const p=Object.keys(PEOPLE).find(n=>nameRe(n).test(best.name));return {name:p||best.name,color:PEOPLE[p]||"white"}}
     }
   }
+  if(/car\s?pool/i.test(v.t)) return {name:"Carpool",short:"CP",color:"white"};
   for(const n of Object.keys(PEOPLE)) if(nameRe(n).test(v.t)) return {name:n,color:PEOPLE[n]};
   for(const n of HELPERS) if(nameRe(n).test(v.t)) return {name:n,color:"white"};
   return null;
@@ -260,7 +263,8 @@ function badge(w,sz){
   if(!w||!w.name) return "";
   if(/^bus$/i.test(w.name)) return icon("bus",sz||28);
   const bgc=C[w.color]||W,fg=(w.color==="yellow"||w.color==="white")?K:W;
-  return `<span class="badge" style="background:${bgc};color:${fg}${sz?`;width:${sz}px;height:${sz}px;font-size:${sz*.5}px`:""}">${esc(w.name[0].toUpperCase())}</span>`;
+  const txt=w.short||w.name[0].toUpperCase(), fs=(sz||28)*(txt.length>1?.4:.5);
+  return `<span class="badge" style="background:${bgc};color:${fg};font-size:${fs}px${sz?`;width:${sz}px;height:${sz}px`:""}">${esc(txt)}</span>`;
 }
 
 function nowParts(){
@@ -278,26 +282,32 @@ function render(D){
   const kids=[...new Set(D.rows.map(r=>r.kid))];
   const kc=k=>C[KID_COLORS[kids.indexOf(k)%KID_COLORS.length]];
 
-  const kidHTML=kids.map(k=>{
+  const kindOf=r=>/after|activ/i.test(r.item)?"after":/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
+  const ORDER={school:0,home:1,after:2};   // morning drive at the top, then back home, then everything else
+  const kidHTML=`<div class="kids">`+kids.map(k=>{
     // only the rows that have something in them today (blank, "—" and black "not applicable" cells are left out)
-    const rs=D.rows.filter(r=>r.kid===k&&!empty(r.vals[f].t)&&!(r.vals[f].bg&&r.vals[f].bg.every(x=>x<40)));
-    if(!rs.length) return `<div class="kid" style="flex:2"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows"><div class="row">${icon("none",28)}<div class="tx"><span class="val none">Nothing planned</span></div></div></div></div>`;
-    const kindOf=r=>/after|activ/i.test(r.item)?"after":/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
-    // room each row needs: a labeled row and text long enough to wrap get more height
-    const weight=r=>1+(kindOf(r)!=="after"?.3:0)+(r.vals[f].t.length>30?.6:0);
-    const tot=rs.reduce((a,r)=>a+weight(r),0);
-    return `<div class="kid" style="flex:${tot+(rs.length===1?.5:0)}"><div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div><div class="rows">`+
+    const rs=D.rows.filter(r=>r.kid===k&&!empty(r.vals[f].t)&&!(r.vals[f].bg&&r.vals[f].bg.every(x=>x<40)))
+      .map((r,i)=>({r,i})).sort((a,b)=>ORDER[kindOf(a.r)]-ORDER[kindOf(b.r)]||a.i-b.i).map(x=>x.r);
+    const head=`<div class="av" style="background:${kc(k)}">${esc(k)}</div>`;
+    if(!rs.length) return `<div class="kid">${head}<div class="rows"><div class="row"><div class="rh">${icon("none",24)}<span class="val none">Nothing planned</span></div></div></div></div>`;
+    return `<div class="kid">${head}<div class="rows">`+
       rs.map(r=>{
         const v=r.vals[f], w=who(v,D), off=/no school/i.test(v.t), na=w&&w.na, none=empty(v.t)||na;
         const fl=!off&&((w&&w.flag)||/\?|needs/i.test(v.t));
         const kind=kindOf(r);
         const ic=off?"sun":none?"none":kind==="after"?pick(ACT,v.t,"star"):kind;
-        return `<div class="row ${off?"off":""} ${fl?"flag":""}" style="flex:${weight(r)}">${off?S(ICON.sun,28,W):icon(ic,28)}<div class="tx">${kind==="school"||kind==="home"?`<span class="lab">${esc(r.item)}</span>`:""}<span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span></div>${off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W}">?</span>`:badge(w)}</div>`;
+        const pic=off?S(ICON.sun,24,W):icon(ic,24);
+        const bdg=off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W};width:24px;height:24px">?</span>`:badge(w,24);
+        const val=`<span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span>`;
+        // To school / Back home: picture + label + driver on top, details underneath; everything else: picture + text
+        return `<div class="row ${off?"off":""} ${fl?"flag":""}">`+(kind==="school"||kind==="home"
+          ? `<div class="rh">${pic}<span class="lab">${esc(r.item)}</span>${bdg}</div>${val}`
+          : `<div class="rh">${pic}<div class="tx">${val}</div>${bdg}</div>`)+`</div>`;
       }).join("")+`</div></div>`;
-  }).join("");
+  }).join("")+`</div>`;
 
   const din=D.dinner[f]||"", night=D.night[f]||"";
-  const dinnerHTML=`<div class="dinner"><span style="background:${W};border-radius:50%;padding:3px;border:2px solid ${K}">${icon(pick(FOOD,din,"plate"),32)}</span><div><small>Family dinner</small><b>${esc(din||"—")}</b></div>${night?`<div class="night">${icon("heart",16).replace("<svg",'<svg style="display:inline-block;vertical-align:-3px"')} ${esc(D.nightLabel||"Night")}<br>${esc(night)}</div>`:""}</div>`;
+  const dinnerHTML=`<div class="dinner"><span style="background:${W};border-radius:50%;padding:3px;border:2px solid ${K}">${icon(pick(FOOD,din,"plate"),32)}</span><b>${esc(din||"—")}</b>${night?`<div class="night">${icon("heart",20)}<span>${esc(night)}</span></div>`:""}</div>`;
 
   const notes=D.fyi.filter(n=>n.day==null||n.day===D.days[f]).slice(0,MAX_FYI);
   const fyiHTML=notes.length?`<div class="fyi"><span class="tag">FYI</span>${notes.map(n=>`<div class="n"><i></i><span>${esc(n.t)}</span></div>`).join("")}</div>`:"";
@@ -306,7 +316,8 @@ function render(D){
 
   const seen=new Set();
   const legend=D.legend.map(L=>{const p=Object.keys(PEOPLE).find(n=>new RegExp("\\b"+n+"\\b","i").test(L.name));return p}).filter(p=>p&&!seen.has(p)&&seen.add(p));
-  const lgHTML=(legend.length?legend:Object.keys(PEOPLE)).map(p=>`<span class="lg">${badge({name:p,color:PEOPLE[p]},18)}${esc(p)}</span>`).join("");
+  const lgHTML=(legend.length?legend:Object.keys(PEOPLE)).map(p=>`<span class="lg">${badge({name:p,color:PEOPLE[p]},18)}${esc(p)}</span>`).join("")
+    +`<span class="lg">${badge({name:"Carpool",short:"CP",color:"white"},18)}Carpool</span>`;
 
   const ymd=[dd.getFullYear(),String(dd.getMonth()+1).padStart(2,"0"),String(dd.getDate()).padStart(2,"0")].join("-");
   const wx=WEATHER&&WEATHER[ymd];

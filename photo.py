@@ -1,5 +1,5 @@
 # Picks a photo from the shared Google Photos album and makes photo.png for the display:
-# cropped around the faces in it (OpenCV YuNet face finder), sized for the photo panel (385x364, half the screen), and dithered to the six E Ink Spectra 6 colors.
+# cropped around the faces in it (OpenCV YuNet face finder), sized for the photo panel (256x364, a third of the screen), and dithered to the six E Ink Spectra 6 colors.
 # A different photo is chosen every 15 minutes. If anything fails, no photo.png is written and
 # the page shows a placeholder instead, so the plan itself always renders.
 # If no faces are found (or the face model is missing), it falls back to a crop that favors the top.
@@ -15,7 +15,7 @@ FACE_MODEL = "face_detection_yunet_2023mar.onnx"   # downloaded by the GitHub jo
 ALBUM = os.environ.get("ALBUM_URL") or (
     "https://photos.google.com/share/AF1QipMp2zhF1zyFHB2Lj5cv5UZY24D3LplQbN8BrczfrZw7p13bRqsmQ66JyAZAa3y2XQ"
     "?key=UG9hY1lYcGI4aDFxTEc3Q3FWOURRaWlFaEwxcjRR")
-SIZE = (385, 364)
+SIZE = (256, 364)
 FULL = (800, 480)      # the whole screen, for the Shabbat photo
 SHABBAT_START_HOUR = 16
 FACE_HEIGHT = 0.28     # where faces sit in the crop: 0 = top edge, 0.5 = middle
@@ -70,15 +70,15 @@ def crop_box(w, h, faces, size=SIZE):
         left, top = (w - cw) / 2, (h - ch) * 0.2           # favor the top, where faces usually are
         return (left, top, left + cw, top + ch)
     # everyone's heads plus some room: hair above, shoulders below, a little on each side
-    fx0 = min(f[0] - f[2] * 0.5 for f in faces); fx1 = max(f[0] + f[2] * 1.5 for f in faces)
-    fy0 = min(f[1] - f[3] * 0.6 for f in faces); fy1 = max(f[1] + f[3] * 2.2 for f in faces)
+    fx0 = min(f[0] - f[2] * 0.3 for f in faces); fx1 = max(f[0] + f[2] * 1.3 for f in faces)
+    fy0 = min(f[1] - f[3] * 0.45 for f in faces); fy1 = max(f[1] + f[3] * 1.6 for f in faces)
     face_mid = sum(f[1] + f[3] / 2 for f in faces) / len(faces)
-    # zoom in when the faces are small, but never closer than half the full frame
-    need = max(fx1 - fx0, (fy1 - fy0) * aspect, cw * 0.5)
+    # zoom in when the faces are small, but never closer than a third of the full frame
+    need = max(fx1 - fx0, (fy1 - fy0) * aspect, cw * 0.35)
     # zoom in a bit more if that's the only way to get faces that sit low in the photo up high in the crop
     high = (h - face_mid) / (1 - FACE_HEIGHT) * aspect
     # faces high up wins over fitting everyone: if both can't happen, zoom in and keep the most/biggest faces
-    cw = max(min(cw, high, max(need, high)), cw * 0.5)
+    cw = max(min(cw, high, max(need, high)), cw * 0.35)
     ch = cw / aspect
     if fx1 - fx0 <= cw:
         cx = (fx0 + fx1) / 2
@@ -138,7 +138,7 @@ def main():
     now = datetime.now(ZoneInfo("America/New_York"))
     slot = int(now.timestamp()) // (60 * CHANGE_EVERY_MINUTES)
     idx = (slot * 7919) % len(photos)   # step through the album in a shuffled-looking but stable order
-    done, faces, box, _ = prepare(Image.open(io.BytesIO(get(photos[idx][0] + "=w1200-h1200"))))
+    done, faces, box, _ = prepare(Image.open(io.BytesIO(get(photos[idx][0] + "=w2000-h2000"))))
     done.save("photo.png", optimize=True)
     print(f"photo.png <- photo {idx + 1}/{len(photos)}, {len(faces)} face(s), crop {[round(v) for v in box]}")
     shabbat = (now.weekday() == 4 and now.hour >= SHABBAT_START_HOUR) or now.weekday() == 5

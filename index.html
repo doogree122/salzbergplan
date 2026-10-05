@@ -282,7 +282,7 @@ function render(D){
   const kids=[...new Set(D.rows.map(r=>r.kid))];
   const kc=k=>C[KID_COLORS[kids.indexOf(k)%KID_COLORS.length]];
 
-  const kindOf=r=>/after|activ/i.test(r.item)?"after":/school/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
+  const kindOf=r=>/after|activ/i.test(r.item)?"after":/school|transport|drop|morning/i.test(r.item)?"school":/home|back|pick/i.test(r.item)?"home":"after";
   const ORDER={school:0,home:1,after:2};   // morning drive at the top, then back home, then everything else
   const kidHTML=`<div class="kids">`+kids.map(k=>{
     // only the rows that have something in them today (blank, "—" and black "not applicable" cells are left out)

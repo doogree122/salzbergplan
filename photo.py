@@ -68,12 +68,20 @@ def crop_box(w, h, faces, size=SIZE):
     if not faces:
         left, top = (w - cw) / 2, (h - ch) * 0.2           # favor the top, where faces usually are
         return (left, top, left + cw, top + ch)
-    # the people: every face plus room for hair above, shoulders below and a little on each side
-    fx0 = min(f[0] - f[2] * 0.5 for f in faces); fx1 = max(f[0] + f[2] * 1.5 for f in faces)
-    fy0 = min(f[1] - f[3] * 0.6 for f in faces); fy1 = max(f[1] + f[3] * 2.0 for f in faces)
-    # zoom in as far as that box still fits (faces as big as possible), but not past 40% of the full frame
-    cw = min(cw, max(fx1 - fx0, (fy1 - fy0) * aspect, cw * 0.4))
-    ch = cw / aspect
+    # Framing priorities: 1) every face in the crop  2) faces at the top, with 10% of the
+    # frame as space above the highest head  3) the group centered left to right.
+    head = min(f[1] - f[3] * 0.3 for f in faces)          # top of the highest head (hair above the face box)
+    chin = max(f[1] + f[3] * 1.1 for f in faces)          # bottom of the lowest face
+    fx0 = min(f[0] - f[2] * 0.25 for f in faces); fx1 = max(f[0] + f[2] * 1.25 for f in faces)
+    # 1) the smallest crop that still holds every face (with the 10% headroom)
+    need = min(cw, max(fx1 - fx0, (chin - head) / 0.9 * aspect))
+    full = cw
+    cw = max(need, full * 0.4)                             # usually no closer than 40% of the frame (sharpness)
+    # 2) faces low in the photo: zoom in further (down to 25%, never cutting a face) so heads still reach the top
+    fits_top = (h - head) / 0.9 * aspect
+    if fits_top < cw:
+        cw = max(need, fits_top, full * 0.25)
+    cw = min(cw, full); ch = cw / aspect
     if fx1 - fx0 <= cw:
         cx = (fx0 + fx1) / 2
     else:
@@ -85,7 +93,7 @@ def crop_box(w, h, faces, size=SIZE):
         best = max(lefts, key=lambda l: (score(l), -abs(l + cw / 2 - (fx0 + fx1) / 2)))
         cx = best + cw / 2
     left = max(0.0, min(w - cw, cx - cw / 2))
-    top = max(0.0, min(h - ch, (fy0 + fy1) / 2 - ch / 2))      # the people centered in the frame
+    top = max(0.0, min(h - ch, head - ch * 0.10))             # 10% of the frame above the highest head
     return (left, top, left + cw, top + ch)
 
 def prepare(img, size=SIZE):

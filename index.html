@@ -15,7 +15,7 @@
 html,body{height:100%;overflow:hidden}
 body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Nunito,Arial,sans-serif;color:var(--k)}
 #stage{width:800px;height:480px;flex:none;transform-origin:center}
-#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 300px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
+#screen{width:800px;height:480px;background:var(--w);display:grid;grid-template-columns:1fr 330px;grid-template-rows:62px 1fr 24px;gap:6px;padding:6px;overflow:hidden}
 .fred{font-family:Fredoka,Nunito,Arial,sans-serif}
 svg{display:block;flex:none}
 
@@ -48,7 +48,7 @@ svg{display:block;flex:none}
 .dinner b{font:700 21px/1 Fredoka,Arial,sans-serif}
 .dinner .night{margin-left:auto;display:flex;align-items:center;gap:6px;text-align:right;font:800 15px/1.1 Nunito,Arial,sans-serif;max-width:50%}
 
-/* family photo (right side) — photo.png is made by photo.py at 294x364 (a bit more than a third of the screen) */
+/* family photo (right side) — photo.png is made by photo.py at 324x364 (about 40% of the screen) */
 .right{position:relative;border:3px solid var(--k);border-radius:14px;overflow:hidden;background:var(--b);min-height:0}
 .right img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;image-rendering:pixelated}
 .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--w);font:700 20px/1.1 Fredoka,Arial,sans-serif;text-align:center}
@@ -312,10 +312,8 @@ function render(D){
   const din=D.dinner[f]||"", night=D.night[f]||"";
   const dinnerHTML=`<div class="dinner"><span style="background:${W};border-radius:50%;padding:3px;border:2px solid ${K}">${icon(pick(FOOD,din,"plate"),32)}</span><b>${esc(din||"—")}</b>${night?`<div class="night">${icon("heart",20)}<span>${esc(night)}</span></div>`:""}</div>`;
 
-  const notes=D.fyi.filter(n=>n.day==null||n.day===D.days[f]).slice(0,MAX_FYI);
-  const fyiHTML=notes.length?`<div class="fyi"><span class="tag">FYI</span>${notes.map(n=>`<div class="n"><i></i><span>${esc(n.t)}</span></div>`).join("")}</div>`:"";
   const photoHTML=`<img id="photo" alt="" src="${PHOTO}?t=${Date.now()}" onerror="this.remove();document.getElementById('ph').hidden=false">
-     <div class="ph" id="ph" hidden>${icon("house",64)}<div>Salzberg<br>Family</div>${icon("heart",34)}</div>${fyiHTML}`;
+     <div class="ph" id="ph" hidden>${icon("house",64)}<div>Salzberg<br>Family</div>${icon("heart",34)}</div>`;
 
   const seen=new Set();
   const legend=D.legend.map(L=>{const p=Object.keys(PEOPLE).find(n=>new RegExp("\\b"+n+"\\b","i").test(L.name));return p}).filter(p=>p&&!seen.has(p)&&seen.add(p));

@@ -29,17 +29,16 @@ svg{display:block;flex:none}
 
 /* kids */
 .left{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0}
-.kids{flex:1;display:flex;gap:6px;min-height:0}
-.kid{flex:1;display:flex;flex-direction:column;border:3px solid var(--k);border-radius:14px;overflow:hidden;min-width:0}
-.av{flex:none;display:flex;align-items:center;justify-content:center;height:28px;border-bottom:3px solid var(--k);color:var(--w);font:700 18px/1 Fredoka,Arial,sans-serif}
-.rows{flex:1;display:flex;flex-direction:column;min-height:0}
-.row{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:4px 7px;border-bottom:2px dashed var(--k);min-height:0;overflow:hidden}
+.kids{flex:1;display:flex;flex-direction:column;gap:6px;min-height:0}
+.kid{display:flex;border:3px solid var(--k);border-radius:14px;overflow:hidden;min-height:0}
+.av{width:36px;flex:none;display:flex;align-items:center;justify-content:center;border-right:3px solid var(--k);color:var(--w);font:700 17px Fredoka,Arial,sans-serif}
+.av span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap}
+.rows{flex:1;display:flex;flex-direction:column;min-width:0}
+.row{flex:1;display:flex;align-items:center;gap:8px;padding:2px 8px 2px 6px;border-bottom:2px dashed var(--k);min-height:0;overflow:hidden}
 .row:last-child{border-bottom:0}
-.rh{display:flex;align-items:center;gap:6px;min-width:0}
-.rh .badge{margin-left:auto}
 .tx{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
-.lab{flex:1;font:900 10px/1.05 Nunito,Arial,sans-serif;letter-spacing:.5px;text-transform:uppercase}
-.val{font:800 14px/1.1 Nunito,Arial,sans-serif;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.lab{font:900 9.5px/1 Nunito,Arial,sans-serif;letter-spacing:.6px;text-transform:uppercase}
+.val{font:800 14.5px/1.08 Nunito,Arial,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .val.none{font-weight:700}
 .badge{width:28px;height:28px;border-radius:50%;border:2.5px solid var(--k);display:flex;align-items:center;justify-content:center;font:700 14px Fredoka,Arial,sans-serif;flex:none}
 .row.off{background:var(--k);color:var(--w)}
@@ -88,8 +87,8 @@ const PEOPLE = {Ori:"blue", Navit:"green", Sapir:"red", Arielle:"yellow", Robkin
 const HELPERS = ["Mark","Bachar","Laila","Pas","Jason","Nechama","Isaiah","Weber","Salzberg"];
 // Kid avatar colors, in sheet order
 const KID_COLORS = ["blue","red","green","black"];
-// Order of the kid columns, left to right (kids not listed go after these, in sheet order)
-const KID_ORDER = ["Kol","Havi","Meitav"];
+// Order of the kids, top to bottom (kids not listed go after these, in sheet order)
+const KID_ORDER = ["Kol","Meitav","Havi"];
 // Family photo for the right side (made every hour by photo.py from the shared album)
 const PHOTO = "photo.png";
 // Most FYI notes that fit over the photo
@@ -293,21 +292,20 @@ function render(D){
     // only the rows that have something in them today (blank, "—" and black "not applicable" cells are left out)
     const rs=D.rows.filter(r=>r.kid===k&&!empty(r.vals[f].t)&&!(r.vals[f].bg&&r.vals[f].bg.every(x=>x<40)))
       .map((r,i)=>({r,i})).sort((a,b)=>ORDER[kindOf(a.r)]-ORDER[kindOf(b.r)]||a.i-b.i).map(x=>x.r);
-    const head=`<div class="av" style="background:${kc(k)}">${esc(k)}</div>`;
-    if(!rs.length) return `<div class="kid">${head}<div class="rows"><div class="row"><div class="rh">${icon("none",24)}<span class="val none">Nothing planned</span></div></div></div></div>`;
-    return `<div class="kid">${head}<div class="rows">`+
+    const head=`<div class="av" style="background:${kc(k)}"><span>${esc(k)}</span></div>`;
+    if(!rs.length) return `<div class="kid" style="flex:2">${head}<div class="rows"><div class="row">${icon("none",28)}<div class="tx"><span class="val none">Nothing planned</span></div></div></div></div>`;
+    // room each row needs: a labeled row and text long enough to wrap get more height
+    const weight=r=>1+(kindOf(r)!=="after"?.3:0)+(r.vals[f].t.length>34?.6:0);
+    const tot=rs.reduce((a,r)=>a+weight(r),0);
+    return `<div class="kid" style="flex:${tot+(rs.length===1?.5:0)}">${head}<div class="rows">`+
       rs.map(r=>{
         const v=r.vals[f], w=who(v,D), off=/no school/i.test(v.t), na=w&&w.na, none=empty(v.t)||na;
         const fl=!off&&((w&&w.flag)||/\?|needs/i.test(v.t));
         const kind=kindOf(r);
         const ic=off?"sun":none?"none":kind==="after"?pick(ACT,v.t,"star"):kind;
-        const pic=off?S(ICON.sun,24,W):icon(ic,24);
-        const bdg=off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W};width:24px;height:24px">?</span>`:badge(w,24);
-        const val=`<span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span>`;
-        // To school / Back home: picture + label + driver on top, details underneath; everything else: picture + text
-        return `<div class="row ${off?"off":""} ${fl?"flag":""}">`+(kind==="school"||kind==="home"
-          ? `<div class="rh">${pic}<span class="lab">${esc(r.item)}</span>${bdg}</div>${val}`
-          : `<div class="rh">${pic}<div class="tx">${val}</div>${bdg}</div>`)+`</div>`;
+        const bdg=off||none?"":fl&&!(w&&w.name)?`<span class="badge" style="background:${W}">?</span>`:badge(w);
+        // only To school / Back home rows show their label
+        return `<div class="row ${off?"off":""} ${fl?"flag":""}" style="flex:${weight(r)}">${off?S(ICON.sun,28,W):icon(ic,28)}<div class="tx">${kind==="school"||kind==="home"?`<span class="lab">${esc(r.item)}</span>`:""}<span class="val ${none?"none":""}">${none?"—":esc(v.t)}</span></div>${bdg}</div>`;
       }).join("")+`</div></div>`;
   }).join("")+`</div>`;
 
